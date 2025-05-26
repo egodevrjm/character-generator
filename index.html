@@ -21,10 +21,23 @@
                     <span class="btn-text">Generate Character</span>
                     <span class="loading-spinner"></span>
                 </button>
+                <button id="surpriseBtn" class="surprise-btn" title="Generate a random character">
+                    <span>🎲 Surprise Me!</span>
+                </button>
             </div>
             <div class="api-keys">
                 <button id="apiKeysBtn" class="api-keys-btn">⚙️ API Keys</button>
             </div>
+        </div>
+        
+        <div id="characterSelector" class="character-selector hidden">
+            <div class="selector-header">
+                <h3>Your Characters</h3>
+                <div class="selector-buttons">
+                    <button id="newCharacterBtn" class="new-character-btn">+ New Character</button>
+                </div>
+            </div>
+            <div id="characterTabs" class="character-tabs"></div>
         </div>
 
         <div id="apiKeysModal" class="modal">

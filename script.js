@@ -7,8 +7,58 @@ class CharacterGenerator {
         this.currentAudioBlob = null;
         this.isPlaying = false;
         
+        // Multiple character management
+        this.characters = [];
+        this.currentCharacterIndex = -1;
+        this.maxCharacters = 10;
+        
+        // Random character prompts for "Surprise Me!"
+        this.randomPrompts = [
+            'mysterious shadow assassin',
+            'cheerful halfling bard',
+            'ancient dragon sage',
+            'battle-scarred orc chieftain',
+            'ethereal elven archmage',
+            'grizzled dwarf blacksmith',
+            'cunning goblin merchant',
+            'noble human paladin',
+            'wild forest druid',
+            'enigmatic tiefling warlock',
+            'jovial tavern keeper',
+            'wise monastery monk',
+            'dashing pirate captain',
+            'scholarly wizard librarian',
+            'fierce barbarian warrior',
+            'charming rogue thief',
+            'mystical fortune teller',
+            'veteran mercenary captain',
+            'young apprentice mage',
+            'legendary beast hunter',
+            'peaceful nature cleric',
+            'dark necromancer lord',
+            'skilled elven ranger',
+            'mighty storm giant',
+            'clever gnome inventor',
+            'vengeful vampire countess',
+            'jovial halfling chef',
+            'mysterious planar traveler',
+            'battle-worn gladiator champion',
+            'scheming devil merchant',
+            'wise turtle monk',
+            'flamboyant bard entertainer',
+            'gruff mountain hermit',
+            'ethereal fey princess',
+            'clockwork automaton butler',
+            'seafaring minotaur captain',
+            'desert nomad mystic',
+            'young street urchin rogue',
+            'ancient tree spirit guardian',
+            'crystal dragon scholar'
+        ];
+        
         this.initializeElements();
         this.attachEventListeners();
+        this.loadCharacters();
     }
 
     initializeElements() {
@@ -29,7 +79,11 @@ class CharacterGenerator {
             exportPdfBtn: document.getElementById('exportPdfBtn'),
             playIcon: document.querySelector('.play-icon'),
             pauseIcon: document.querySelector('.pause-icon'),
-            voiceText: document.querySelector('.voice-text')
+            voiceText: document.querySelector('.voice-text'),
+            surpriseBtn: document.getElementById('surpriseBtn'),
+            characterSelector: document.getElementById('characterSelector'),
+            characterTabs: document.getElementById('characterTabs'),
+            newCharacterBtn: document.getElementById('newCharacterBtn')
         };
     }
 
@@ -38,6 +92,9 @@ class CharacterGenerator {
         this.elements.characterPrompt.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.generateCharacter();
         });
+        
+        this.elements.surpriseBtn.addEventListener('click', () => this.generateRandomCharacter());
+        this.elements.newCharacterBtn.addEventListener('click', () => this.createNewCharacter());
         
         this.elements.apiKeysBtn.addEventListener('click', () => this.showApiModal());
         this.elements.closeModal.addEventListener('click', () => this.hideApiModal());
@@ -86,15 +143,30 @@ class CharacterGenerator {
     showMessage(message, type = 'error') {
         this.elements.errorMessage.textContent = message;
         this.elements.errorMessage.classList.remove('hidden');
-        this.elements.errorMessage.style.background = type === 'success' 
-            ? 'rgba(81, 207, 102, 0.1)' 
-            : 'rgba(255, 107, 107, 0.1)';
-        this.elements.errorMessage.style.borderColor = type === 'success' 
-            ? '#51cf66' 
-            : '#ff6b6b';
-        this.elements.errorMessage.style.color = type === 'success' 
-            ? '#51cf66' 
-            : '#ff6b6b';
+        
+        let bgColor, borderColor, textColor;
+        
+        switch (type) {
+            case 'success':
+                bgColor = 'rgba(81, 207, 102, 0.1)';
+                borderColor = '#51cf66';
+                textColor = '#51cf66';
+                break;
+            case 'info':
+                bgColor = 'rgba(52, 152, 219, 0.1)';
+                borderColor = '#3498db';
+                textColor = '#3498db';
+                break;
+            default: // error
+                bgColor = 'rgba(255, 107, 107, 0.1)';
+                borderColor = '#ff6b6b';
+                textColor = '#ff6b6b';
+                break;
+        }
+        
+        this.elements.errorMessage.style.background = bgColor;
+        this.elements.errorMessage.style.borderColor = borderColor;
+        this.elements.errorMessage.style.color = textColor;
         
         setTimeout(() => {
             this.elements.errorMessage.classList.add('hidden');
@@ -118,6 +190,9 @@ class CharacterGenerator {
         this.setLoading(true);
         this.elements.characterCard.classList.add('hidden');
         this.elements.errorMessage.classList.add('hidden');
+        
+        // Reset character index for new generation
+        this.currentCharacterIndex = -1;
         
         try {
             // Step 1: Refine character concept with Gemini
@@ -153,6 +228,195 @@ class CharacterGenerator {
             this.showMessage(error.message || 'Failed to generate character. Please try again.');
         } finally {
             this.setLoading(false);
+        }
+    }
+    
+    generateRandomCharacter() {
+        // Pick a random prompt
+        const randomIndex = Math.floor(Math.random() * this.randomPrompts.length);
+        const randomPrompt = this.randomPrompts[randomIndex];
+        
+        // Set the prompt in the input field
+        this.elements.characterPrompt.value = randomPrompt;
+        
+        // Add a little dice roll animation to the button
+        this.elements.surpriseBtn.style.transform = 'rotate(360deg)';
+        setTimeout(() => {
+            this.elements.surpriseBtn.style.transform = 'rotate(0deg)';
+        }, 300);
+        
+        // Generate the character
+        this.generateCharacter();
+    }
+    
+    createNewCharacter() {
+        // Clear current character and reset the form
+        this.currentCharacter = null;
+        this.currentAudioBlob = null;
+        this.currentCharacterIndex = -1;
+        
+        // Clear the input
+        this.elements.characterPrompt.value = '';
+        
+        // Hide the character card
+        this.elements.characterCard.classList.add('hidden');
+        
+        // Update tabs to show no selection
+        this.updateCharacterTabs();
+        
+        // Focus on the input
+        this.elements.characterPrompt.focus();
+    }
+    
+    addCharacter(characterData, imageUrl, audioUrl) {
+        // Check if we've reached the max
+        if (this.characters.length >= this.maxCharacters) {
+            this.showMessage(`Maximum of ${this.maxCharacters} characters reached. Delete one to create more.`);
+            return false;
+        }
+        
+        // Add the new character
+        const newCharacter = {
+            data: characterData,
+            imageUrl: imageUrl,
+            audioUrl: audioUrl,
+            audioBlob: this.currentAudioBlob,
+            id: Date.now() // Simple unique ID
+        };
+        
+        this.characters.push(newCharacter);
+        this.currentCharacterIndex = this.characters.length - 1;
+        
+        // Save to localStorage
+        this.saveCharacters();
+        
+        // Update the UI
+        this.updateCharacterTabs();
+        
+        // Show the selector if it was hidden
+        this.elements.characterSelector.classList.remove('hidden');
+        
+        return true;
+    }
+    
+    selectCharacter(index) {
+        if (index < 0 || index >= this.characters.length) return;
+        
+        this.currentCharacterIndex = index;
+        const character = this.characters[index];
+        
+        // Restore the character data
+        this.currentCharacter = character.data;
+        this.currentAudioBlob = character.audioBlob;
+        
+        // Display the character
+        this.displayCharacter(character.data, character.imageUrl, character.audioUrl);
+        
+        // Update tabs to show selection
+        this.updateCharacterTabs();
+        
+        // Clear the input prompt when selecting an existing character
+        this.elements.characterPrompt.value = '';
+    }
+    
+    deleteCharacter(index) {
+        if (index < 0 || index >= this.characters.length) return;
+        
+        // Confirm deletion
+        const character = this.characters[index];
+        if (!confirm(`Delete ${character.data.name}?`)) return;
+        
+        // Remove the character
+        this.characters.splice(index, 1);
+        
+        // Adjust current index if needed
+        if (this.currentCharacterIndex === index) {
+            // Select the previous character or clear if none
+            if (this.characters.length > 0) {
+                this.selectCharacter(Math.max(0, index - 1));
+            } else {
+                this.createNewCharacter();
+                this.elements.characterSelector.classList.add('hidden');
+            }
+        } else if (this.currentCharacterIndex > index) {
+            this.currentCharacterIndex--;
+        }
+        
+        // Save and update UI
+        this.saveCharacters();
+        this.updateCharacterTabs();
+    }
+    
+    updateCharacterTabs() {
+        this.elements.characterTabs.innerHTML = '';
+        
+        this.characters.forEach((character, index) => {
+            const tab = document.createElement('div');
+            tab.className = 'character-tab';
+            if (index === this.currentCharacterIndex) {
+                tab.classList.add('active');
+            }
+            
+            tab.innerHTML = `
+                <div class="character-tab-name">${character.data.name}</div>
+                <div class="character-tab-info">${character.data.race} ${character.data.class}</div>
+                <div class="character-tab-delete" title="Delete character">×</div>
+            `;
+            
+            // Click to select
+            tab.addEventListener('click', (e) => {
+                if (!e.target.classList.contains('character-tab-delete')) {
+                    this.selectCharacter(index);
+                }
+            });
+            
+            // Delete button
+            tab.querySelector('.character-tab-delete').addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.deleteCharacter(index);
+            });
+            
+            this.elements.characterTabs.appendChild(tab);
+        });
+    }
+    
+    saveCharacters() {
+        // Save character data to localStorage (without blob URLs which can't be serialized)
+        const saveData = this.characters.map(char => ({
+            data: char.data,
+            id: char.id
+            // Note: We can't save blob URLs or audio blobs, they'll be lost on refresh
+        }));
+        
+        localStorage.setItem('fantasyCharacters', JSON.stringify(saveData));
+    }
+    
+    loadCharacters() {
+        const savedData = localStorage.getItem('fantasyCharacters');
+        if (savedData) {
+            try {
+                const characters = JSON.parse(savedData);
+                // Note: We can only restore the character data, not images/audio
+                characters.forEach(char => {
+                    this.characters.push({
+                        data: char.data,
+                        id: char.id,
+                        imageUrl: null, // Lost on refresh
+                        audioUrl: null, // Lost on refresh
+                        audioBlob: null // Lost on refresh
+                    });
+                });
+                
+                if (this.characters.length > 0) {
+                    this.elements.characterSelector.classList.remove('hidden');
+                    this.updateCharacterTabs();
+                    
+                    // Show a note about lost media
+                    this.showMessage('Note: Character data restored, but images and voices need to be regenerated', 'info');
+                }
+            } catch (e) {
+                console.error('Failed to load saved characters:', e);
+            }
         }
     }
 
@@ -600,6 +864,13 @@ class CharacterGenerator {
 
         // Show the character card
         this.elements.characterCard.classList.remove('hidden');
+        
+        // Add to character collection if this is a new character (not selected from tabs)
+        if (this.currentCharacterIndex === -1) {
+            if (this.addCharacter(characterData, imageUrl, audioUrl)) {
+                this.showMessage(`${characterData.name} added to your collection!`, 'success');
+            }
+        }
     }
 
     async regenerateVoice() {
@@ -635,6 +906,13 @@ class CharacterGenerator {
                 this.audioElement.src = audioUrl;
                 this.elements.playVoiceBtn.disabled = false;
                 this.elements.downloadVoiceBtn.disabled = false;
+                
+                // Update the stored character audio if we're working with a saved character
+                if (this.currentCharacterIndex >= 0 && this.currentCharacterIndex < this.characters.length) {
+                    this.characters[this.currentCharacterIndex].audioUrl = audioUrl;
+                    this.characters[this.currentCharacterIndex].audioBlob = this.currentAudioBlob;
+                }
+                
                 this.showMessage('Voice regenerated successfully!', 'success');
             } else {
                 this.showMessage('Failed to regenerate voice');
