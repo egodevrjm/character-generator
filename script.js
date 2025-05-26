@@ -162,6 +162,10 @@ class CharacterGenerator {
         // Load preferences
         this.elements.imageStyleSelect.value = this.imageStyle;
         this.elements.dmVoiceSelect.value = this.dmVoice;
+        
+        // Log current settings for debugging
+        console.log('Loaded image style:', this.imageStyle);
+        console.log('Image style select value:', this.elements.imageStyleSelect.value);
     }
 
     showApiModal() {
@@ -175,8 +179,16 @@ class CharacterGenerator {
     saveApiKeys() {
         this.geminiApiKey = this.elements.geminiKeyInput.value.trim();
         this.elevenLabsApiKey = this.elements.elevenLabsKeyInput.value.trim();
-        this.imageStyle = this.elements.imageStyleSelect.value;
-        this.dmVoice = this.elements.dmVoiceSelect.value;
+        
+        // Update the image style and DM voice from the selects
+        const newImageStyle = this.elements.imageStyleSelect.value;
+        const newDmVoice = this.elements.dmVoiceSelect.value;
+        
+        // Check if image style changed
+        const styleChanged = this.imageStyle !== newImageStyle;
+        
+        this.imageStyle = newImageStyle;
+        this.dmVoice = newDmVoice;
         
         localStorage.setItem('geminiApiKey', this.geminiApiKey);
         localStorage.setItem('elevenLabsApiKey', this.elevenLabsApiKey);
@@ -184,7 +196,12 @@ class CharacterGenerator {
         localStorage.setItem('dmVoice', this.dmVoice);
         
         this.hideApiModal();
-        this.showMessage('Settings saved successfully!', 'success');
+        
+        if (styleChanged) {
+            this.showMessage('Settings saved! New image style will be used for future generations.', 'success');
+        } else {
+            this.showMessage('Settings saved successfully!', 'success');
+        }
     }
     
     switchTab(tabName) {
@@ -332,6 +349,7 @@ class CharacterGenerator {
         
         try {
             console.log('Regenerating character image...');
+            console.log('Current image style setting:', this.imageStyle);
             const imageUrl = await this.generateCharacterImage(this.currentCharacter);
             
             if (imageUrl) {
@@ -702,7 +720,12 @@ class CharacterGenerator {
         }
         
         // Create a detailed prompt for the image generation
-        const imagePrompt = `${characterData.imagePrompt || 'fantasy character'}, ${this.imageStyle} style, detailed, atmospheric lighting, high quality, character portrait`;
+        // Always use the current imageStyle setting
+        const styleToUse = this.imageStyle || 'fantasy art';
+        console.log('Using image style:', styleToUse);
+        
+        const imagePrompt = `${characterData.imagePrompt || 'fantasy character'}, ${styleToUse} style, detailed, atmospheric lighting, high quality, character portrait`;
+        console.log('Full image prompt:', imagePrompt);
         
         try {
             // Using the predict endpoint for imagen-3.0-generate-002
