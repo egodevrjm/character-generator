@@ -26,7 +26,7 @@
                 </button>
             </div>
             <div class="api-keys">
-                <button id="apiKeysBtn" class="api-keys-btn">⚙️ API Keys</button>
+                <button id="apiKeysBtn" class="api-keys-btn">⚙️ Settings</button>
             </div>
         </div>
         
@@ -43,18 +43,63 @@
         <div id="apiKeysModal" class="modal">
             <div class="modal-content">
                 <span class="close">&times;</span>
-                <h2>API Configuration</h2>
-                <div class="api-input-group">
-                    <label for="geminiKey">Google AI Studio API Key:</label>
-                    <input type="password" id="geminiKey" placeholder="Enter your Gemini API key">
-                    <small>Get your key from <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a></small>
+                <h2>Settings & API Configuration</h2>
+                
+                <div class="settings-tabs">
+                    <button class="tab-btn active" data-tab="api">API Keys</button>
+                    <button class="tab-btn" data-tab="preferences">Preferences</button>
                 </div>
-                <div class="api-input-group">
-                    <label for="elevenLabsKey">ElevenLabs API Key:</label>
-                    <input type="password" id="elevenLabsKey" placeholder="Enter your ElevenLabs API key">
-                    <small>Get your key from <a href="https://elevenlabs.io" target="_blank">ElevenLabs</a></small>
+                
+                <div class="tab-content api-tab active">
+                    <div class="api-input-group">
+                        <label for="geminiKey">Google AI Studio API Key:</label>
+                        <input type="password" id="geminiKey" placeholder="Enter your Gemini API key">
+                        <small>Get your key from <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a></small>
+                    </div>
+                    <div class="api-input-group">
+                        <label for="elevenLabsKey">ElevenLabs API Key:</label>
+                        <input type="password" id="elevenLabsKey" placeholder="Enter your ElevenLabs API key">
+                        <small>Get your key from <a href="https://elevenlabs.io" target="_blank">ElevenLabs</a></small>
+                    </div>
                 </div>
-                <button id="saveKeys" class="save-btn">Save Keys</button>
+                
+                <div class="tab-content preferences-tab">
+                    <div class="preference-group">
+                        <label for="imageStyle">Image Generation Style:</label>
+                        <select id="imageStyle" class="preference-select">
+                            <option value="fantasy art">Fantasy Art (Default)</option>
+                            <option value="anime style">Anime Style</option>
+                            <option value="realistic portrait">Realistic Portrait</option>
+                            <option value="oil painting">Oil Painting</option>
+                            <option value="watercolor">Watercolor</option>
+                            <option value="comic book">Comic Book</option>
+                            <option value="dark fantasy">Dark Fantasy</option>
+                            <option value="steampunk">Steampunk</option>
+                            <option value="cyberpunk">Cyberpunk</option>
+                            <option value="pixel art">Pixel Art</option>
+                        </select>
+                        <small>Choose the art style for generated character images</small>
+                    </div>
+                    
+                    <div class="preference-group">
+                        <label for="dmVoice">DM Narrator Voice:</label>
+                        <select id="dmVoice" class="preference-select">
+                            <option value="21m00Tcm4TlvDq8ikWAM">Rachel (Default Female)</option>
+                            <option value="pNInz6obpgDQGcFmaJgB">Adam (Deep Male)</option>
+                            <option value="ErXwobaYiN019PkySvjV">Antoni (Young Male)</option>
+                            <option value="VR6AewLTigWG4xSOukaG">Arnold (Strong Male)</option>
+                            <option value="EXAVITQu4vr4xnSDxMaL">Bella (Warm Female)</option>
+                            <option value="MF3mGyEYCl7XYWbV9V6O">Elli (Young Female)</option>
+                            <option value="TxGEqnHWrfWFTfGW9XjX">Josh (Mature Male)</option>
+                            <option value="g5CIjZEefAph4nQFvHAz">Preminger (Elderly)</option>
+                            <option value="t0jbNlBVZ17f02VDIeMI">Glinda (Magical Female)</option>
+                            <option value="piTKgcLEGmPE4e6mEKli">Nicole (Soft Female)</option>
+                        </select>
+                        <small>Choose the narrator voice for DM narration</small>
+                    </div>
+                </div>
+                
+                <button id="saveKeys" class="save-btn">Save Settings</button>
             </div>
         </div>
 
@@ -65,6 +110,11 @@
                     <div class="image-loading">
                         <div class="shimmer"></div>
                     </div>
+                    <button id="regenerateImageBtn" class="regenerate-image-btn" title="Regenerate image" disabled>
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                    </svg>
+                    </button>
                 </div>
                 
                 <div class="character-info">

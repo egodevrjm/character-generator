@@ -9,6 +9,10 @@ class CharacterGenerator {
         this.isPlaying = false;
         this.isDMNarrating = false;
         
+        // User preferences
+        this.imageStyle = localStorage.getItem('imageStyle') || 'fantasy art';
+        this.dmVoice = localStorage.getItem('dmVoice') || '21m00Tcm4TlvDq8ikWAM';
+        
         // Multiple character management
         this.characters = [];
         this.currentCharacterIndex = -1;
@@ -61,6 +65,11 @@ class CharacterGenerator {
         this.initializeElements();
         this.attachEventListeners();
         this.loadCharacters();
+        
+        // Ensure regenerate buttons are disabled on startup
+        this.elements.regenerateImageBtn.disabled = true;
+        this.elements.regenerateVoiceBtn.disabled = true;
+        this.elements.downloadVoiceBtn.disabled = true;
     }
 
     initializeElements() {
@@ -86,7 +95,12 @@ class CharacterGenerator {
             characterSelector: document.getElementById('characterSelector'),
             characterTabs: document.getElementById('characterTabs'),
             newCharacterBtn: document.getElementById('newCharacterBtn'),
-            dmNarrateBtn: document.getElementById('dmNarrateBtn')
+            dmNarrateBtn: document.getElementById('dmNarrateBtn'),
+            regenerateImageBtn: document.getElementById('regenerateImageBtn'),
+            imageStyleSelect: document.getElementById('imageStyle'),
+            dmVoiceSelect: document.getElementById('dmVoice'),
+            tabBtns: document.querySelectorAll('.tab-btn'),
+            tabContents: document.querySelectorAll('.tab-content')
         };
     }
 
@@ -108,10 +122,16 @@ class CharacterGenerator {
         this.elements.downloadVoiceBtn.addEventListener('click', () => this.downloadVoice());
         this.elements.exportPdfBtn.addEventListener('click', () => this.exportToPDF());
         this.elements.dmNarrateBtn.addEventListener('click', () => this.generateDMNarration());
+        this.elements.regenerateImageBtn.addEventListener('click', () => this.regenerateImage());
         
         this.audioElement.addEventListener('ended', () => {
             this.isPlaying = false;
             this.updatePlayButton();
+        });
+        
+        // Tab switching
+        this.elements.tabBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
         });
         
         window.addEventListener('click', (e) => {
@@ -123,6 +143,10 @@ class CharacterGenerator {
         // Load existing API keys
         this.elements.geminiKeyInput.value = this.geminiApiKey;
         this.elements.elevenLabsKeyInput.value = this.elevenLabsApiKey;
+        
+        // Load preferences
+        this.elements.imageStyleSelect.value = this.imageStyle;
+        this.elements.dmVoiceSelect.value = this.dmVoice;
     }
 
     showApiModal() {
@@ -136,12 +160,26 @@ class CharacterGenerator {
     saveApiKeys() {
         this.geminiApiKey = this.elements.geminiKeyInput.value.trim();
         this.elevenLabsApiKey = this.elements.elevenLabsKeyInput.value.trim();
+        this.imageStyle = this.elements.imageStyleSelect.value;
+        this.dmVoice = this.elements.dmVoiceSelect.value;
         
         localStorage.setItem('geminiApiKey', this.geminiApiKey);
         localStorage.setItem('elevenLabsApiKey', this.elevenLabsApiKey);
+        localStorage.setItem('imageStyle', this.imageStyle);
+        localStorage.setItem('dmVoice', this.dmVoice);
         
         this.hideApiModal();
-        this.showMessage('API keys saved successfully!', 'success');
+        this.showMessage('Settings saved successfully!', 'success');
+    }
+    
+    switchTab(tabName) {
+        // Remove active class from all tabs and contents
+        this.elements.tabBtns.forEach(btn => btn.classList.remove('active'));
+        this.elements.tabContents.forEach(content => content.classList.remove('active'));
+        
+        // Add active class to selected tab and content
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        document.querySelector(`.${tabName}-tab`).classList.add('active');
     }
 
     showMessage(message, type = 'error') {
@@ -198,6 +236,9 @@ class CharacterGenerator {
         // Reset character index for new generation
         this.currentCharacterIndex = -1;
         
+        // Disable regenerate buttons until character is loaded
+        this.elements.regenerateImageBtn.disabled = true;
+        
         try {
             // Step 1: Refine character concept with Gemini
             console.log('Refining character concept...');
@@ -227,11 +268,66 @@ class CharacterGenerator {
             // Step 4: Display the character
             this.displayCharacter(characterData, imageUrl, audioUrl);
             
+            // Always enable regenerate buttons
+            this.elements.regenerateImageBtn.disabled = false;
+            
         } catch (error) {
             console.error('Error generating character:', error);
             this.showMessage(error.message || 'Failed to generate character. Please try again.');
         } finally {
             this.setLoading(false);
+        }
+    }
+    
+    async regenerateImage() {
+        // Only regenerate the image, nothing else
+        if (!this.currentCharacter) {
+            this.showMessage('No character to regenerate image for');
+            return;
+        }
+        
+        if (!this.geminiApiKey) {
+            this.showMessage('Gemini API key required for image generation');
+            return;
+        }
+        
+        // Disable button and show loading state
+        this.elements.regenerateImageBtn.disabled = true;
+        this.elements.regenerateImageBtn.classList.add('loading');
+        
+        // Add loading state to image
+        const characterImage = document.getElementById('characterImage');
+        characterImage.classList.remove('loaded');
+        
+        try {
+            console.log('Regenerating character image...');
+            const imageUrl = await this.generateCharacterImage(this.currentCharacter);
+            
+            if (imageUrl) {
+                // Update the image
+                characterImage.src = imageUrl;
+                characterImage.onload = () => {
+                    characterImage.classList.add('loaded');
+                };
+                
+                // Update the stored character image if we're working with a saved character
+                if (this.currentCharacterIndex >= 0 && this.currentCharacterIndex < this.characters.length) {
+                    this.characters[this.currentCharacterIndex].imageUrl = imageUrl;
+                }
+                
+                this.showMessage('Image regenerated successfully!', 'success');
+            } else {
+                this.showMessage('Failed to regenerate image');
+                characterImage.classList.add('loaded'); // Remove loading state
+            }
+        } catch (error) {
+            console.error('Image regeneration failed:', error);
+            this.showMessage('Failed to regenerate image');
+            characterImage.classList.add('loaded'); // Remove loading state
+        } finally {
+            // Re-enable button and remove loading state
+            this.elements.regenerateImageBtn.disabled = false;
+            this.elements.regenerateImageBtn.classList.remove('loading');
         }
     }
     
@@ -264,6 +360,9 @@ class CharacterGenerator {
         
         // Hide the character card
         this.elements.characterCard.classList.add('hidden');
+        
+        // Disable regenerate buttons
+        this.elements.regenerateImageBtn.disabled = true;
         
         // Update tabs to show no selection
         this.updateCharacterTabs();
@@ -315,6 +414,9 @@ class CharacterGenerator {
         
         // Display the character
         this.displayCharacter(character.data, character.imageUrl, character.audioUrl);
+        
+        // Enable regenerate buttons
+        this.elements.regenerateImageBtn.disabled = false;
         
         // Update tabs to show selection
         this.updateCharacterTabs();
@@ -548,7 +650,7 @@ class CharacterGenerator {
         }
         
         // Create a detailed prompt for the image generation
-        const imagePrompt = `${characterData.imagePrompt || 'fantasy character'}, fantasy character portrait, digital art style, detailed, atmospheric lighting, high quality`;
+        const imagePrompt = `${characterData.imagePrompt || 'fantasy character'}, ${this.imageStyle} style, detailed, atmospheric lighting, high quality, character portrait`;
         
         try {
             // Using the predict endpoint for imagen-3.0-generate-002
@@ -1309,8 +1411,8 @@ class CharacterGenerator {
             const narrationText = this.createDMNarrationText(this.currentCharacter);
             console.log('DM Narration text:', narrationText);
             
-            // Use ElevenLabs text-to-speech with a narrator voice
-            const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM', { // Rachel voice (narrator)
+            // Use ElevenLabs text-to-speech with selected narrator voice
+            const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${this.dmVoice}`, {
                 method: 'POST',
                 headers: {
                     'xi-api-key': this.elevenLabsApiKey,
