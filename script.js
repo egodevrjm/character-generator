@@ -23,6 +23,7 @@ class CharacterGenerator {
             geminiKeyInput: document.getElementById('geminiKey'),
             elevenLabsKeyInput: document.getElementById('elevenLabsKey'),
             playVoiceBtn: document.getElementById('playVoiceBtn'),
+            regenerateVoiceBtn: document.getElementById('regenerateVoiceBtn'),
             playIcon: document.querySelector('.play-icon'),
             pauseIcon: document.querySelector('.pause-icon'),
             voiceText: document.querySelector('.voice-text')
@@ -40,6 +41,7 @@ class CharacterGenerator {
         this.elements.saveKeysBtn.addEventListener('click', () => this.saveApiKeys());
         
         this.elements.playVoiceBtn.addEventListener('click', () => this.toggleVoice());
+        this.elements.regenerateVoiceBtn.addEventListener('click', () => this.regenerateVoice());
         
         this.audioElement.addEventListener('ended', () => {
             this.isPlaying = false;
@@ -440,15 +442,29 @@ class CharacterGenerator {
 
     async generateCharacterVoice(characterData) {
         // ⭐ THIS IS THE KEY FEATURE: Using ElevenLabs SFX creatively for character voices!
-        // Instead of traditional sound effects, we use prompts like "Say in the style of..."
-        // to generate unique character voices through the sound-generation endpoint
+        // The exact format is crucial: speaking in the style of <description> "<words>"
         
-        // Create voice prompt with safe access
-        const characterDescription = characterData?.description || 'mysterious character';
+        // Extract key descriptors from the character
+        const race = characterData?.race || 'mysterious';
+        const characterClass = characterData?.class || 'warrior';
+        const age = characterData?.age || 'ancient';
         const characterQuote = characterData?.quote || 'Greetings, traveller';
         
-        // This is the creative part - using SFX to generate character voices!
-        const voicePrompt = `Say in the style of ${characterDescription.split('.')[0].toLowerCase()}: "${characterQuote}"`;
+        // Build the short character description (e.g., "middle aged orc warrior")
+        // The exact format is CRUCIAL for ElevenLabs SFX to work properly
+        let shortDescription = '';
+        
+        // Add age descriptor if it's descriptive
+        if (age.toLowerCase().includes('young')) shortDescription += 'young ';
+        else if (age.toLowerCase().includes('old') || age.toLowerCase().includes('ancient')) shortDescription += 'old ';
+        else if (age.toLowerCase().includes('middle')) shortDescription += 'middle aged ';
+        
+        // Add race and class
+        shortDescription += `${race.toLowerCase()} ${characterClass.toLowerCase()}`;
+        shortDescription = shortDescription.trim();
+        
+        // Create the exact format: speaking in the style of <description> "<quote>"
+        const voicePrompt = `speaking in the style of ${shortDescription} "${characterQuote}"`;
         console.log('Generating character voice with SFX:', voicePrompt);
         
         // The text-to-sound-effects endpoint is the key feature we're showcasing
@@ -507,12 +523,60 @@ class CharacterGenerator {
         if (this.audioElement && audioUrl) {
             this.audioElement.src = audioUrl;
             this.elements.playVoiceBtn.disabled = false;
+            this.elements.regenerateVoiceBtn.disabled = false;
         } else {
             this.elements.playVoiceBtn.disabled = true;
+            this.elements.regenerateVoiceBtn.disabled = false; // Can still try to generate
         }
 
         // Show the character card
         this.elements.characterCard.classList.remove('hidden');
+    }
+
+    async regenerateVoice() {
+        // Only regenerate the voice, nothing else
+        if (!this.currentCharacter) {
+            this.showMessage('No character to regenerate voice for');
+            return;
+        }
+        
+        if (!this.elevenLabsApiKey) {
+            this.showMessage('ElevenLabs API key required');
+            return;
+        }
+        
+        // Disable buttons and show loading state
+        this.elements.regenerateVoiceBtn.disabled = true;
+        this.elements.regenerateVoiceBtn.classList.add('loading');
+        this.elements.playVoiceBtn.disabled = true;
+        
+        // Stop any playing audio
+        if (this.isPlaying) {
+            this.audioElement.pause();
+            this.isPlaying = false;
+            this.updatePlayButton();
+        }
+        
+        try {
+            console.log('Regenerating character voice...');
+            const audioUrl = await this.generateCharacterVoice(this.currentCharacter);
+            
+            if (audioUrl) {
+                // Update the audio element with new URL
+                this.audioElement.src = audioUrl;
+                this.elements.playVoiceBtn.disabled = false;
+                this.showMessage('Voice regenerated successfully!', 'success');
+            } else {
+                this.showMessage('Failed to regenerate voice');
+            }
+        } catch (error) {
+            console.error('Voice regeneration failed:', error);
+            this.showMessage('Failed to regenerate voice');
+        } finally {
+            // Re-enable buttons and remove loading state
+            this.elements.regenerateVoiceBtn.disabled = false;
+            this.elements.regenerateVoiceBtn.classList.remove('loading');
+        }
     }
 
     toggleVoice() {

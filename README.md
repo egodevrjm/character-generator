@@ -8,13 +8,14 @@
 
 ## 🌟 Overview
 
-This web application showcases how the ElevenLabs SFX endpoint can be used beyond traditional sound effects to create unique character voices using creative prompt engineering. By using prompts like "Say in the style of [character]: [quote]", we can generate distinctive character voices that bring fantasy characters to life.
+This web application showcases how the ElevenLabs SFX endpoint can be used beyond traditional sound effects to create unique character voices using creative prompt engineering. By using prompts like `speaking in the style of <character> "<quote>"`, we can generate distinctive character voices that bring fantasy characters to life.
 
 ## ✨ Features
 
 - **🤖 AI Character Creation**: Uses Google Gemini to expand simple prompts into detailed character profiles
 - **🎨 Portrait Generation**: Creates character portraits using Google's Imagen 3
 - **🎤 Creative Voice Synthesis**: **The key feature** - Uses ElevenLabs text-to-sound-effects API creatively to generate character voices
+- **🔄 Voice Regeneration**: Regenerate button allows creating new voice variations without regenerating the entire character
 - **🃏 Animated Character Cards**: Beautiful presentation with character stats, background, and playable voice clips
 
 ## 🚀 Quick Start
@@ -54,6 +55,7 @@ You'll need API keys from:
    - A detailed character profile
    - A unique portrait
    - A character voice speaking their signature quote
+4. Use the "Regenerate" button next to the play button to create new voice variations
 
 ### Example Prompts
 
@@ -68,14 +70,16 @@ You'll need API keys from:
 ### How It Works
 
 1. **Character Analysis**: Gemini creates a detailed character with a signature quote
-2. **SFX Prompt Engineering**: The app constructs prompts like:
-   - `"Say in the style of a stout dwarf with a magnificent braided beard: 'By my beard, justice will prevail!'"`
-   - `"Say in the style of a mysterious dark elf: 'Shadows conceal more than darkness'"`
+2. **SFX Prompt Engineering**: The app constructs prompts using the exact format:
+   - `speaking in the style of <character description> "<quote>"`
+   - Example: `speaking in the style of middle aged dwarf warrior "By my beard, justice will prevail!"`
+   - Example: `speaking in the style of young elf mage "Magic flows through all things"`
 3. **Voice Generation**: The SFX API interprets these prompts to create unique character voices
+4. **Voice Regeneration**: Click the regenerate button to create a new variation of the character's voice
 
 ### Why This Works
 
-The text-to-sound-effects endpoint is remarkably versatile. While designed for sound effects, it can interpret "Say in the style of..." prompts to generate speech with character-appropriate voice qualities.
+The text-to-sound-effects endpoint is remarkably versatile. While designed for sound effects, it can interpret prompts with the exact format `speaking in the style of <description> "<words>"` to generate speech with character-appropriate voice qualities. The specific format is crucial for optimal results.
 
 Perfect for:
 - 🎮 Game development voice prototypes
@@ -87,7 +91,8 @@ Perfect for:
 
 - **Character AI**: Gemini 2.0 Flash for character concept refinement
 - **Image Generation**: Imagen 3 (model: imagen-3.0-generate-002) via predict API
-- **Voice Generation**: ElevenLabs text-to-sound-effects API with creative prompting
+- **Voice Generation**: ElevenLabs text-to-sound-effects API with exact prompt format: `speaking in the style of <description> "<words>"`
+- **Voice Regeneration**: Regenerate button allows creating voice variations without regenerating the entire character
 - **Frontend**: Vanilla JavaScript, HTML5, CSS3
 - **Data**: All processing client-side, no server storage
 
@@ -114,6 +119,8 @@ character-generator/
 - Verify your ElevenLabs API key
 - Check your ElevenLabs credit balance
 - Ensure you're online
+- Try clicking the regenerate button for a new variation
+- The exact prompt format is crucial: `speaking in the style of <description> "<words>"`
 
 ### CORS Issues
 - Run from a local web server, not file://

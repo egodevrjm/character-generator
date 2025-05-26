@@ -383,6 +383,12 @@ header {
     border-top: 1px solid rgba(212, 175, 55, 0.2);
 }
 
+.voice-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
 .play-voice-btn {
     display: flex;
     align-items: center;
@@ -396,7 +402,6 @@ header {
     font-size: 1.1rem;
     font-weight: 600;
     transition: all 0.3s ease;
-    margin-bottom: 1rem;
 }
 
 .play-voice-btn:hover:not(:disabled) {
@@ -407,6 +412,42 @@ header {
 .play-voice-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+.regenerate-voice-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: rgba(212, 175, 55, 0.2);
+    color: var(--secondary-color);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.regenerate-voice-btn:hover:not(:disabled) {
+    background: rgba(212, 175, 55, 0.3);
+    border-color: var(--secondary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 3px 15px rgba(212, 175, 55, 0.3);
+}
+
+.regenerate-voice-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.regenerate-voice-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.regenerate-voice-btn.loading svg {
+    animation: spin 1s linear infinite;
 }
 
 .play-icon, .pause-icon {
