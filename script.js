@@ -4,6 +4,7 @@ class CharacterGenerator {
         this.elevenLabsApiKey = localStorage.getItem('elevenLabsApiKey') || '';
         this.audioElement = document.getElementById('characterAudio');
         this.currentCharacter = null;
+        this.currentAudioBlob = null;
         this.isPlaying = false;
         
         this.initializeElements();
@@ -24,6 +25,8 @@ class CharacterGenerator {
             elevenLabsKeyInput: document.getElementById('elevenLabsKey'),
             playVoiceBtn: document.getElementById('playVoiceBtn'),
             regenerateVoiceBtn: document.getElementById('regenerateVoiceBtn'),
+            downloadVoiceBtn: document.getElementById('downloadVoiceBtn'),
+            exportPdfBtn: document.getElementById('exportPdfBtn'),
             playIcon: document.querySelector('.play-icon'),
             pauseIcon: document.querySelector('.pause-icon'),
             voiceText: document.querySelector('.voice-text')
@@ -42,6 +45,8 @@ class CharacterGenerator {
         
         this.elements.playVoiceBtn.addEventListener('click', () => this.toggleVoice());
         this.elements.regenerateVoiceBtn.addEventListener('click', () => this.regenerateVoice());
+        this.elements.downloadVoiceBtn.addEventListener('click', () => this.downloadVoice());
+        this.elements.exportPdfBtn.addEventListener('click', () => this.exportToPDF());
         
         this.audioElement.addEventListener('ended', () => {
             this.isPlaying = false;
@@ -487,6 +492,7 @@ class CharacterGenerator {
         }
 
         const audioBlob = await response.blob();
+        this.currentAudioBlob = audioBlob; // Store for download
         return URL.createObjectURL(audioBlob);
     }
 
@@ -524,9 +530,11 @@ class CharacterGenerator {
             this.audioElement.src = audioUrl;
             this.elements.playVoiceBtn.disabled = false;
             this.elements.regenerateVoiceBtn.disabled = false;
+            this.elements.downloadVoiceBtn.disabled = false;
         } else {
             this.elements.playVoiceBtn.disabled = true;
             this.elements.regenerateVoiceBtn.disabled = false; // Can still try to generate
+            this.elements.downloadVoiceBtn.disabled = true;
         }
 
         // Show the character card
@@ -565,6 +573,7 @@ class CharacterGenerator {
                 // Update the audio element with new URL
                 this.audioElement.src = audioUrl;
                 this.elements.playVoiceBtn.disabled = false;
+                this.elements.downloadVoiceBtn.disabled = false;
                 this.showMessage('Voice regenerated successfully!', 'success');
             } else {
                 this.showMessage('Failed to regenerate voice');
@@ -617,6 +626,111 @@ class CharacterGenerator {
             this.elements.generateBtn.classList.add('loading');
         } else {
             this.elements.generateBtn.classList.remove('loading');
+        }
+    }
+    
+    downloadVoice() {
+        if (!this.currentAudioBlob || !this.currentCharacter) {
+            this.showMessage('No voice available to download');
+            return;
+        }
+        
+        // Create a download link
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(this.currentAudioBlob);
+        link.download = `${this.currentCharacter.name.replace(/[^a-z0-9]/gi, '_')}_voice.mp3`;
+        
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Clean up
+        setTimeout(() => URL.revokeObjectURL(link.href), 100);
+        
+        this.showMessage('Voice downloaded successfully!', 'success');
+    }
+    
+    async exportToPDF() {
+        if (!this.currentCharacter) {
+            this.showMessage('No character to export');
+            return;
+        }
+        
+        try {
+            // Show loading state
+            this.elements.exportPdfBtn.disabled = true;
+            this.elements.exportPdfBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="currentColor" class="animate-spin">
+                    <path d="M12 2v4m0 12v4m10-10h-4M6 12H2m15.364 6.364l-2.828-2.828M8.464 8.464L5.636 5.636m12.728 0l-2.828 2.828m-7.072 7.072l-2.828 2.828"/>
+                </svg>
+                <span>Generating PDF...</span>
+            `;
+            
+            // Temporarily hide buttons for cleaner PDF
+            const exportSection = document.querySelector('.export-section');
+            exportSection.style.display = 'none';
+            
+            // Capture the character card
+            const characterCard = document.getElementById('characterCard');
+            const canvas = await html2canvas(characterCard, {
+                backgroundColor: '#1a1a1a',
+                scale: 2,
+                logging: false,
+                useCORS: true,
+                allowTaint: true
+            });
+            
+            // Restore export section
+            exportSection.style.display = 'block';
+            
+            // Create PDF
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+            
+            // Calculate dimensions to fit A4
+            const imgWidth = 190; // A4 width minus margins
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            
+            // Add title
+            pdf.setFontSize(24);
+            pdf.setTextColor(212, 175, 55);
+            pdf.text('Fantasy Character Sheet', 105, 20, { align: 'center' });
+            
+            // Add subtitle
+            pdf.setFontSize(12);
+            pdf.setTextColor(150, 150, 150);
+            pdf.text('Generated with ElevenLabs SFX Character Voice', 105, 30, { align: 'center' });
+            
+            // Add the character card image
+            const imgData = canvas.toDataURL('image/png');
+            pdf.addImage(imgData, 'PNG', 10, 40, imgWidth, imgHeight);
+            
+            // Add generation date
+            pdf.setFontSize(10);
+            pdf.text(`Generated on: ${new Date().toLocaleDateString('en-GB')}`, 105, 280, { align: 'center' });
+            
+            // Save the PDF
+            pdf.save(`${this.currentCharacter.name.replace(/[^a-z0-9]/gi, '_')}_character_sheet.pdf`);
+            
+            this.showMessage('Character sheet exported successfully!', 'success');
+            
+        } catch (error) {
+            console.error('Failed to export PDF:', error);
+            this.showMessage('Failed to export character sheet');
+        } finally {
+            // Restore button state
+            this.elements.exportPdfBtn.disabled = false;
+            this.elements.exportPdfBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10,19L8,14H10L11.43,17.59L13,14H15L13,19H10Z"/>
+                </svg>
+                <span>Export Character as PDF</span>
+            `;
         }
     }
 }

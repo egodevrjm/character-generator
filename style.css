@@ -313,6 +313,10 @@ header {
     100% { transform: translateX(100%); }
 }
 
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
 .character-info {
     display: flex;
     flex-direction: column;
@@ -387,6 +391,7 @@ header {
     display: flex;
     gap: 1rem;
     margin-bottom: 1rem;
+    flex-wrap: wrap;
 }
 
 .play-voice-btn {
@@ -448,6 +453,70 @@ header {
 
 .regenerate-voice-btn.loading svg {
     animation: spin 1s linear infinite;
+}
+
+.download-voice-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: rgba(81, 207, 102, 0.2);
+    color: var(--success-color);
+    border: 1px solid rgba(81, 207, 102, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.download-voice-btn:hover:not(:disabled) {
+    background: rgba(81, 207, 102, 0.3);
+    border-color: var(--success-color);
+    transform: translateY(-2px);
+    box-shadow: 0 3px 15px rgba(81, 207, 102, 0.3);
+}
+
+.download-voice-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.download-voice-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.export-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.export-pdf-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #2c3e50, #3498db);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.export-pdf-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(52, 152, 219, 0.4);
+}
+
+.export-pdf-btn svg {
+    width: 24px;
+    height: 24px;
 }
 
 .play-icon, .pause-icon {

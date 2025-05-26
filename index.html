@@ -102,8 +102,23 @@
                                 </svg>
                                 <span>Regenerate</span>
                             </button>
+                            <button id="downloadVoiceBtn" class="download-voice-btn" title="Download voice" disabled>
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                                </svg>
+                                <span>Download</span>
+                            </button>
                         </div>
                         <p id="characterQuote" class="character-quote"></p>
+                    </div>
+                    
+                    <div class="export-section">
+                        <button id="exportPdfBtn" class="export-pdf-btn">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10,19L8,14H10L11.43,17.59L13,14H15L13,19H10Z"/>
+                            </svg>
+                            <span>Export Character as PDF</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -113,6 +128,11 @@
     </div>
 
     <audio id="characterAudio" class="hidden"></audio>
+    
+    <!-- PDF Export Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
     <script src="script.js"></script>
 </body>
 </html>
