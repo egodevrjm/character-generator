@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fantasy Character Generator</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Text:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="title">Fantasy Character Generator</h1>
+            <p class="subtitle">ElevenLabs SFX Character Voice Showcase</p>
+        </header>
+
+        <div class="input-section">
+            <div class="input-wrapper">
+                <input type="text" id="characterPrompt" placeholder="e.g., middle aged Orc warrior" />
+                <button id="generateBtn" class="generate-btn">
+                    <span class="btn-text">Generate Character</span>
+                    <span class="loading-spinner"></span>
+                </button>
+            </div>
+            <div class="api-keys">
+                <button id="apiKeysBtn" class="api-keys-btn">⚙️ API Keys</button>
+            </div>
+        </div>
+
+        <div id="apiKeysModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>API Configuration</h2>
+                <div class="api-input-group">
+                    <label for="geminiKey">Google AI Studio API Key:</label>
+                    <input type="password" id="geminiKey" placeholder="Enter your Gemini API key">
+                    <small>Get your key from <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a></small>
+                </div>
+                <div class="api-input-group">
+                    <label for="elevenLabsKey">ElevenLabs API Key:</label>
+                    <input type="password" id="elevenLabsKey" placeholder="Enter your ElevenLabs API key">
+                    <small>Get your key from <a href="https://elevenlabs.io" target="_blank">ElevenLabs</a></small>
+                </div>
+                <button id="saveKeys" class="save-btn">Save Keys</button>
+            </div>
+        </div>
+
+        <div id="characterCard" class="character-card hidden">
+            <div class="card-inner">
+                <div class="character-image-container">
+                    <img id="characterImage" class="character-image" alt="Character portrait">
+                    <div class="image-loading">
+                        <div class="shimmer"></div>
+                    </div>
+                </div>
+                
+                <div class="character-info">
+                    <h2 id="characterName" class="character-name"></h2>
+                    <div class="character-details">
+                        <div class="detail-section">
+                            <h3>Description</h3>
+                            <p id="characterDescription"></p>
+                        </div>
+                        <div class="detail-section">
+                            <h3>Background</h3>
+                            <p id="characterBackground"></p>
+                        </div>
+                        <div class="stats-grid">
+                            <div class="stat">
+                                <span class="stat-label">Race</span>
+                                <span id="characterRace" class="stat-value"></span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Class</span>
+                                <span id="characterClass" class="stat-value"></span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Age</span>
+                                <span id="characterAge" class="stat-value"></span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Alignment</span>
+                                <span id="characterAlignment" class="stat-value"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="voice-section">
+                        <button id="playVoiceBtn" class="play-voice-btn">
+                            <svg class="play-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M8 5v14l11-7z"/>
+                            </svg>
+                            <svg class="pause-icon hidden" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                            </svg>
+                            <span class="voice-text">Play Voice</span>
+                        </button>
+                        <p id="characterQuote" class="character-quote"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="errorMessage" class="error-message hidden"></div>
+    </div>
+
+    <audio id="characterAudio" class="hidden"></audio>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElevenLabs Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #f0f0f0;
+        }
+        input, button {
+            padding: 10px;
+            margin: 10px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>ElevenLabs API Test</h1>
+    
+    <input type="password" id="apiKey" placeholder="Enter your ElevenLabs API key">
+    <button onclick="testVoices()">Test Voice List</button>
+    <button onclick="testSFX()">Test Sound Effects</button>
+    <button onclick="testTTS()">Test Text-to-Speech</button>
+    
+    <div id="result"></div>
+
+    <script>
+        async function testVoices() {
+            const apiKey = document.getElementById('apiKey').value;
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                const response = await fetch('https://api.elevenlabs.io/v1/voices', {
+                    headers: { 'xi-api-key': apiKey }
+                });
+                
+                const data = await response.json();
+                resultDiv.textContent = 'Voices Response:\n' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        async function testSFX() {
+            const apiKey = document.getElementById('apiKey').value;
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                const response = await fetch('https://api.elevenlabs.io/v1/sound-generation', {
+                    method: 'POST',
+                    headers: {
+                        'xi-api-key': apiKey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: "Say in the style of a gruff dwarf warrior: By my beard!",
+                        duration_seconds: 3
+                    })
+                });
+                
+                resultDiv.textContent = 'Sound Effects Response: ' + response.status + ' ' + response.statusText;
+                if (!response.ok) {
+                    const error = await response.text();
+                    resultDiv.textContent += '\n' + error;
+                } else {
+                    resultDiv.textContent += '\nSuccess! Audio generated.';
+                }
+            } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        async function testTTS() {
+            const apiKey = document.getElementById('apiKey').value;
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                // First get voices
+                const voicesResp = await fetch('https://api.elevenlabs.io/v1/voices', {
+                    headers: { 'xi-api-key': apiKey }
+                });
+                const voicesData = await voicesResp.json();
+                const voice = voicesData.voices[0];
+                
+                const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice.voice_id}`, {
+                    method: 'POST',
+                    headers: {
+                        'xi-api-key': apiKey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: "By my beard, justice will prevail!",
+                        model_id: 'eleven_monolingual_v1'
+                    })
+                });
+                
+                resultDiv.textContent = 'TTS Response: ' + response.status + ' ' + response.statusText;
+                if (!response.ok) {
+                    const error = await response.text();
+                    resultDiv.textContent += '\n' + error;
+                } else {
+                    resultDiv.textContent += '\nSuccess! Audio generated using voice: ' + voice.name;
+                }
+            } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

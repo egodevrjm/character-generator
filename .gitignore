@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# API Keys (though we store in localStorage, just in case)
+config.js
+secrets.json
+apikeys.json
+*.key
+
+# Generated audio files (from testing)
+*.mp3
+*.wav
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*~
+
+# Keep test files for GitHub (they're useful examples)
+# But never commit with actual API keys in them!

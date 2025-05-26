@@ -1,0 +1,35 @@
+{
+  "name": "elevenlabs-character-generator",
+  "version": "1.0.0",
+  "description": "Fantasy Character Generator - Creative showcase of ElevenLabs text-to-sound-effects API for character voice generation",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server -p 8000 -o",
+    "dev": "npx http-server -p 8000",
+    "test": "echo \"No tests configured\""
+  },
+  "keywords": [
+    "elevenlabs",
+    "text-to-speech",
+    "sound-effects",
+    "character-generator",
+    "ai",
+    "gemini",
+    "imagen",
+    "voice-synthesis",
+    "game-development"
+  ],
+  "author": "Ryan Morrison",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/egodevrjm/character-generator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/egodevrjm/character-generator/issues"
+  },
+  "homepage": "https://github.com/egodevrjm/character-generator#readme",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

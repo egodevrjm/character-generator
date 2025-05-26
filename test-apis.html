@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test - Character Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #f0f0f0;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            background: #2a2a2a;
+        }
+        input {
+            width: 300px;
+            padding: 8px;
+            margin: 10px 0;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            background: #333;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .success { border-left: 4px solid #4CAF50; }
+        .error { border-left: 4px solid #f44336; }
+    </style>
+</head>
+<body>
+    <h1>API Test for Character Generator</h1>
+    
+    <div class="test-section">
+        <h2>API Keys</h2>
+        <div>
+            <label>Google AI Studio API Key:</label><br>
+            <input type="password" id="geminiKey" placeholder="Enter your Gemini API key">
+        </div>
+        <div>
+            <label>ElevenLabs API Key:</label><br>
+            <input type="password" id="elevenLabsKey" placeholder="Enter your ElevenLabs API key">
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test APIs</h2>
+        <button onclick="testGemini()">Test Gemini API</button>
+        <button onclick="testElevenLabs()">Test ElevenLabs API</button>
+        <button onclick="testImagen()">Test Imagen 3 API</button>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function addResult(message, isSuccess) {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${isSuccess ? 'success' : 'error'}`;
+            resultDiv.textContent = message;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        async function testGemini() {
+            const apiKey = document.getElementById('geminiKey').value;
+            if (!apiKey) {
+                addResult('Please enter your Gemini API key', false);
+                return;
+            }
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{ text: "Say 'Hello, the Gemini API is working!'" }]
+                        }]
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('✓ Gemini API is working! Response: ' + data.candidates[0].content.parts[0].text, true);
+                } else {
+                    addResult('✗ Gemini API error: ' + response.status + ' ' + response.statusText, false);
+                }
+            } catch (error) {
+                addResult('✗ Gemini API error: ' + error.message, false);
+            }
+        }
+
+        async function testElevenLabs() {
+            const apiKey = document.getElementById('elevenLabsKey').value;
+            if (!apiKey) {
+                addResult('Please enter your ElevenLabs API key', false);
+                return;
+            }
+
+            try {
+                const response = await fetch('https://api.elevenlabs.io/v1/user/subscription', {
+                    headers: { 'xi-api-key': apiKey }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('✓ ElevenLabs API is working! Tier: ' + data.tier, true);
+                } else {
+                    addResult('✗ ElevenLabs API error: ' + response.status + ' ' + response.statusText, false);
+                }
+            } catch (error) {
+                addResult('✗ ElevenLabs API error: ' + error.message, false);
+            }
+        }
+
+        async function testImagen() {
+            const apiKey = document.getElementById('geminiKey').value;
+            if (!apiKey) {
+                addResult('Please enter your Gemini API key (used for Imagen access)', false);
+                return;
+            }
+
+            addResult('Testing Imagen 3 API with predict endpoint...', true);
+
+            try {
+                // Using the correct predict endpoint for imagen-3.0-generate-002
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        instances: [
+                            {
+                                prompt: "A simple red circle on white background"
+                            }
+                        ],
+                        parameters: {
+                            sampleCount: 1,
+                            aspectRatio: "1:1"
+                        }
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('✓ Imagen 3 API response received!', true);
+                    
+                    if (data.predictions && data.predictions.length > 0) {
+                        addResult('✓ Imagen 3 API is working! Image generated successfully.', true);
+                        
+                        // Show a preview if possible
+                        const prediction = data.predictions[0];
+                        if (prediction.bytesBase64Encoded) {
+                            addResult('Image preview available in main app', true);
+                        }
+                    } else {
+                        addResult('Response structure: ' + JSON.stringify(data).substring(0, 200) + '...', true);
+                    }
+                } else {
+                    const errorText = await response.text();
+                    addResult('✗ Imagen 3 API error: ' + response.status + ' - ' + errorText, false);
+                }
+            } catch (error) {
+                addResult('✗ Imagen 3 API error: ' + error.message, false);
+            }
+        }
+    </script>
+</body>
+</html>
