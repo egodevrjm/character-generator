@@ -3,9 +3,11 @@ class CharacterGenerator {
         this.geminiApiKey = localStorage.getItem('geminiApiKey') || '';
         this.elevenLabsApiKey = localStorage.getItem('elevenLabsApiKey') || '';
         this.audioElement = document.getElementById('characterAudio');
+        this.dmAudioElement = document.getElementById('dmNarrationAudio');
         this.currentCharacter = null;
         this.currentAudioBlob = null;
         this.isPlaying = false;
+        this.isDMNarrating = false;
         
         // Multiple character management
         this.characters = [];
@@ -83,7 +85,8 @@ class CharacterGenerator {
             surpriseBtn: document.getElementById('surpriseBtn'),
             characterSelector: document.getElementById('characterSelector'),
             characterTabs: document.getElementById('characterTabs'),
-            newCharacterBtn: document.getElementById('newCharacterBtn')
+            newCharacterBtn: document.getElementById('newCharacterBtn'),
+            dmNarrateBtn: document.getElementById('dmNarrateBtn')
         };
     }
 
@@ -104,6 +107,7 @@ class CharacterGenerator {
         this.elements.regenerateVoiceBtn.addEventListener('click', () => this.regenerateVoice());
         this.elements.downloadVoiceBtn.addEventListener('click', () => this.downloadVoice());
         this.elements.exportPdfBtn.addEventListener('click', () => this.exportToPDF());
+        this.elements.dmNarrateBtn.addEventListener('click', () => this.generateDMNarration());
         
         this.audioElement.addEventListener('ended', () => {
             this.isPlaying = false;
@@ -1273,6 +1277,149 @@ class CharacterGenerator {
                     <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10,19L8,14H10L11.43,17.59L13,14H15L13,19H10Z"/>
                 </svg>
                 <span>Export Character as PDF</span>
+            `;
+        }
+    }
+    
+    async generateDMNarration() {
+        if (!this.currentCharacter) {
+            this.showMessage('No character to narrate');
+            return;
+        }
+        
+        if (!this.elevenLabsApiKey) {
+            this.showMessage('ElevenLabs API key required for narration');
+            return;
+        }
+        
+        // Stop any existing narration
+        if (this.isDMNarrating) {
+            this.dmAudioElement.pause();
+            this.isDMNarrating = false;
+            this.updateDMButton();
+            return;
+        }
+        
+        // Show loading state
+        this.elements.dmNarrateBtn.disabled = true;
+        this.elements.dmNarrateBtn.classList.add('loading');
+        
+        try {
+            // Create the narration text
+            const narrationText = this.createDMNarrationText(this.currentCharacter);
+            console.log('DM Narration text:', narrationText);
+            
+            // Use ElevenLabs text-to-speech with a narrator voice
+            const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM', { // Rachel voice (narrator)
+                method: 'POST',
+                headers: {
+                    'xi-api-key': this.elevenLabsApiKey,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    text: narrationText,
+                    model_id: 'eleven_monolingual_v1',
+                    voice_settings: {
+                        stability: 0.75,
+                        similarity_boost: 0.75,
+                        style: 0.0,
+                        use_speaker_boost: true
+                    }
+                })
+            });
+            
+            if (!response.ok) {
+                const error = await response.text();
+                console.error('ElevenLabs TTS error:', error);
+                throw new Error('Failed to generate narration');
+            }
+            
+            const audioBlob = await response.blob();
+            const audioUrl = URL.createObjectURL(audioBlob);
+            
+            // Set up and play the narration
+            this.dmAudioElement.src = audioUrl;
+            this.dmAudioElement.play();
+            this.isDMNarrating = true;
+            this.updateDMButton();
+            
+            // Handle narration end
+            this.dmAudioElement.onended = () => {
+                this.isDMNarrating = false;
+                this.updateDMButton();
+                URL.revokeObjectURL(audioUrl);
+            };
+            
+        } catch (error) {
+            console.error('Failed to generate DM narration:', error);
+            this.showMessage('Failed to generate narration');
+        } finally {
+            this.elements.dmNarrateBtn.disabled = false;
+            this.elements.dmNarrateBtn.classList.remove('loading');
+        }
+    }
+    
+    createDMNarrationText(characterData) {
+        // Create a natural-sounding narration for the DM to read
+        const { name, gender, race, characterClass, age, alignment, description, background, personality, quote } = characterData;
+        
+        let narration = `You encounter ${name}, `;
+        
+        // Add gender if not non-binary
+        if (gender && gender.toLowerCase() !== 'non-binary' && gender.toLowerCase() !== 'unknown') {
+            narration += `a ${gender} `;
+        } else {
+            narration += `a `;
+        }
+        
+        // Add age descriptor
+        if (age && age.toLowerCase().includes('young')) {
+            narration += `young `;
+        } else if (age && (age.toLowerCase().includes('old') || age.toLowerCase().includes('ancient'))) {
+            narration += `venerable `;
+        }
+        
+        // Add race and class
+        narration += `${race} ${characterData.class}.\n\n`;
+        
+        // Add description
+        narration += `${description}\n\n`;
+        
+        // Add background
+        narration += `${background}\n\n`;
+        
+        // Add personality
+        if (personality) {
+            narration += `This ${race} is ${personality}.\n\n`;
+        }
+        
+        // Add alignment
+        if (alignment && alignment.toLowerCase() !== 'unknown') {
+            narration += `${name} follows the path of ${alignment}.\n\n`;
+        }
+        
+        // Add the character's signature quote
+        if (quote) {
+            narration += `As you approach, you hear them say: \"${quote}\"\n`;
+        }
+        
+        return narration;
+    }
+    
+    updateDMButton() {
+        if (this.isDMNarrating) {
+            this.elements.dmNarrateBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                </svg>
+                <span>Stop Narration</span>
+            `;
+        } else {
+            this.elements.dmNarrateBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z"/>
+                </svg>
+                <span>DM Narration</span>
             `;
         }
     }

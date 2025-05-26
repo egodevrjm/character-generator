@@ -434,6 +434,15 @@ header {
     .character-tab {
         width: 100%;
     }
+    
+    .export-section {
+        flex-direction: column;
+    }
+    
+    .export-pdf-btn,
+    .dm-narrate-btn {
+        width: 100%;
+    }
 }
 
 .character-image-container {
@@ -653,6 +662,9 @@ header {
     margin-top: 1.5rem;
     padding-top: 1.5rem;
     border-top: 1px solid rgba(212, 175, 55, 0.2);
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
 }
 
 .export-pdf-btn {
@@ -668,7 +680,7 @@ header {
     font-size: 1.1rem;
     font-weight: 600;
     transition: all 0.3s ease;
-    width: 100%;
+    flex: 1;
 }
 
 .export-pdf-btn:hover {
@@ -679,6 +691,47 @@ header {
 .export-pdf-btn svg {
     width: 24px;
     height: 24px;
+}
+
+.dm-narrate-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #8E44AD, #9B59B6);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    flex: 1;
+}
+
+.dm-narrate-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(155, 89, 182, 0.4);
+}
+
+.dm-narrate-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.dm-narrate-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+.dm-narrate-btn.loading svg {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
 }
 
 .play-icon, .pause-icon {
