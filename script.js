@@ -163,6 +163,7 @@ class CharacterGenerator {
         Create a detailed fantasy character profile with the following information in JSON format:
         {
             "name": "A unique fantasy name",
+            "gender": "The character's gender (male, female, or non-binary)",
             "race": "The character's race",
             "class": "The character's class/profession",
             "age": "Their age",
@@ -234,6 +235,7 @@ class CharacterGenerator {
             // Fallback: create default character data
             characterData = {
                 name: "Grimbold Ironforge",
+                gender: "male",
                 race: "Dwarf",
                 class: "Warrior",
                 age: "147 years",
@@ -247,10 +249,17 @@ class CharacterGenerator {
         }
         
         // Ensure all required fields exist (silently add defaults)
-        const requiredFields = ['name', 'race', 'class', 'age', 'alignment', 'description', 'background', 'quote', 'imagePrompt'];
+        const requiredFields = ['name', 'gender', 'race', 'class', 'age', 'alignment', 'description', 'background', 'quote', 'imagePrompt'];
         for (const field of requiredFields) {
             if (!characterData[field]) {
-                characterData[field] = field === 'name' ? 'Unknown Hero' : 'Unknown';
+                if (field === 'name') {
+                    characterData[field] = 'Unknown Hero';
+                } else if (field === 'gender') {
+                    // Try to detect gender from description or name if not provided
+                    characterData[field] = this.detectGender(characterData);
+                } else {
+                    characterData[field] = 'Unknown';
+                }
             }
         }
         
@@ -445,19 +454,68 @@ class CharacterGenerator {
         });
     }
 
+    detectGender(characterData) {
+        // Try to detect gender from description or name
+        const description = (characterData.description || '').toLowerCase();
+        const name = (characterData.name || '').toLowerCase();
+        const background = (characterData.background || '').toLowerCase();
+        
+        // Common male indicators
+        const maleIndicators = ['he ', 'his ', 'him ', 'himself', 'man ', 'boy ', 'male ', 'son ', 'father', 'brother', 'king ', 'lord ', 'sir '];
+        const femaleIndicators = ['she ', 'her ', 'hers ', 'herself', 'woman ', 'girl ', 'female ', 'daughter', 'mother', 'sister', 'queen ', 'lady ', 'maiden'];
+        
+        // Check description and background
+        const textToCheck = description + ' ' + background;
+        
+        let maleCount = 0;
+        let femaleCount = 0;
+        
+        maleIndicators.forEach(indicator => {
+            if (textToCheck.includes(indicator)) maleCount++;
+        });
+        
+        femaleIndicators.forEach(indicator => {
+            if (textToCheck.includes(indicator)) femaleCount++;
+        });
+        
+        // Common gendered name endings (very rough heuristic)
+        if (name.endsWith('a') || name.endsWith('ia') || name.endsWith('ina') || name.endsWith('ella')) {
+            femaleCount++;
+        }
+        if (name.endsWith('us') || name.endsWith('os') || name.endsWith('or') || name.endsWith('ion')) {
+            maleCount++;
+        }
+        
+        // Determine gender based on counts
+        if (maleCount > femaleCount) {
+            return 'male';
+        } else if (femaleCount > maleCount) {
+            return 'female';
+        } else {
+            // Default to neutral if unclear
+            return 'non-binary';
+        }
+    }
+
     async generateCharacterVoice(characterData) {
         // ⭐ THIS IS THE KEY FEATURE: Using ElevenLabs SFX creatively for character voices!
-        // The exact format is crucial: speaking in the style of <description> "<words>"
+        // The exact format is crucial: speaking in the style of <gender> <age> <race> <class> "<words>"
+        // THE WORDS MUST BE IN DOUBLE QUOTES!
         
         // Extract key descriptors from the character
+        const gender = characterData?.gender || 'mysterious';
         const race = characterData?.race || 'mysterious';
         const characterClass = characterData?.class || 'warrior';
         const age = characterData?.age || 'ancient';
         const characterQuote = characterData?.quote || 'Greetings, traveller';
         
-        // Build the short character description (e.g., "middle aged orc warrior")
-        // The exact format is CRUCIAL for ElevenLabs SFX to work properly
+        // Build the character description including gender
         let shortDescription = '';
+        
+        // Add gender (male/female/non-binary)
+        if (gender.toLowerCase() !== 'non-binary' && gender.toLowerCase() !== 'unknown') {
+            shortDescription += `${gender.toLowerCase()} `;
+        }
         
         // Add age descriptor if it's descriptive
         if (age.toLowerCase().includes('young')) shortDescription += 'young ';
@@ -469,6 +527,7 @@ class CharacterGenerator {
         shortDescription = shortDescription.trim();
         
         // Create the exact format: speaking in the style of <description> "<quote>"
+        // CRITICAL: The quote MUST be wrapped in double quotes!
         const voicePrompt = `speaking in the style of ${shortDescription} "${characterQuote}"`;
         console.log('Generating character voice with SFX:', voicePrompt);
         
@@ -519,6 +578,7 @@ class CharacterGenerator {
         updateElement('characterName', characterData.name);
         updateElement('characterDescription', characterData.description);
         updateElement('characterBackground', characterData.background);
+        updateElement('characterGender', characterData.gender ? characterData.gender.charAt(0).toUpperCase() + characterData.gender.slice(1) : 'Unknown');
         updateElement('characterRace', characterData.race);
         updateElement('characterClass', characterData.class);
         updateElement('characterAge', characterData.age);
