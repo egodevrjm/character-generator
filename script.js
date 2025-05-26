@@ -501,6 +501,7 @@ class CharacterGenerator {
         // ⭐ THIS IS THE KEY FEATURE: Using ElevenLabs SFX creatively for character voices!
         // The exact format is crucial: speaking in the style of <gender> <age> <race> <class> "<words>"
         // THE WORDS MUST BE IN DOUBLE QUOTES!
+        // Example: speaking in the style of male old dwarf warrior "By my beard, justice will prevail!"
         
         // Extract key descriptors from the character
         const gender = characterData?.gender || 'mysterious';
@@ -727,24 +728,7 @@ class CharacterGenerator {
                 <span>Generating PDF...</span>
             `;
             
-            // Temporarily hide buttons for cleaner PDF
-            const exportSection = document.querySelector('.export-section');
-            exportSection.style.display = 'none';
-            
-            // Capture the character card
-            const characterCard = document.getElementById('characterCard');
-            const canvas = await html2canvas(characterCard, {
-                backgroundColor: '#1a1a1a',
-                scale: 2,
-                logging: false,
-                useCORS: true,
-                allowTaint: true
-            });
-            
-            // Restore export section
-            exportSection.style.display = 'block';
-            
-            // Create PDF
+            // Create PDF with print-friendly design
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF({
                 orientation: 'portrait',
@@ -752,27 +736,248 @@ class CharacterGenerator {
                 format: 'a4'
             });
             
-            // Calculate dimensions to fit A4
-            const imgWidth = 190; // A4 width minus margins
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            // PDF dimensions
+            const pageWidth = 210;
+            const pageHeight = 297;
+            const margin = 15;
+            const contentWidth = pageWidth - (margin * 2);
+            let yPos = margin;
             
-            // Add title
-            pdf.setFontSize(24);
-            pdf.setTextColor(212, 175, 55);
-            pdf.text('Fantasy Character Sheet', 105, 20, { align: 'center' });
+            // Helper function to add wrapped text
+            const addWrappedText = (text, x, y, maxWidth, lineHeight = 5) => {
+                const lines = pdf.splitTextToSize(text, maxWidth);
+                lines.forEach((line, i) => {
+                    pdf.text(line, x, y + (i * lineHeight));
+                });
+                return y + (lines.length * lineHeight);
+            };
             
-            // Add subtitle
+            // Add decorative border
+            pdf.setDrawColor(139, 69, 19); // Brown color
+            pdf.setLineWidth(1);
+            pdf.rect(margin - 5, margin - 5, contentWidth + 10, pageHeight - (margin * 2) + 10);
+            
+            // Add inner border
+            pdf.setLineWidth(0.5);
+            pdf.rect(margin - 3, margin - 3, contentWidth + 6, pageHeight - (margin * 2) + 6);
+            
+            // Title
+            pdf.setFontSize(28);
+            pdf.setTextColor(0, 0, 0);
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Fantasy Character Sheet', pageWidth / 2, yPos + 10, { align: 'center' });
+            yPos += 20;
+            
+            // Character name
+            pdf.setFontSize(22);
+            pdf.setTextColor(139, 69, 19); // Brown color for name
+            pdf.text(this.currentCharacter.name, pageWidth / 2, yPos, { align: 'center' });
+            yPos += 15;
+            
+            // Add horizontal line
+            pdf.setDrawColor(212, 175, 55); // Gold color
+            pdf.setLineWidth(0.5);
+            pdf.line(margin, yPos, pageWidth - margin, yPos);
+            yPos += 10;
+            
+            // Character Image (if available)
+            const characterImage = document.getElementById('characterImage');
+            if (characterImage && characterImage.src) {
+                try {
+                    // Check if it's a blob URL or base64 (these should work)
+                    if (characterImage.src.startsWith('blob:') || characterImage.src.startsWith('data:')) {
+                        // Add image on the right side
+                        const imgSize = 60;
+                        pdf.addImage(characterImage.src, 'PNG', pageWidth - margin - imgSize, yPos, imgSize, imgSize);
+                    } else if (!characterImage.src.includes('data:image/svg')) {
+                        // For other URLs, try to convert to canvas (might fail due to CORS)
+                        const imgCanvas = document.createElement('canvas');
+                        const ctx = imgCanvas.getContext('2d');
+                        imgCanvas.width = characterImage.naturalWidth || 400;
+                        imgCanvas.height = characterImage.naturalHeight || 400;
+                        
+                        // Create a new image to bypass potential CORS issues
+                        const tempImg = new Image();
+                        tempImg.crossOrigin = 'anonymous';
+                        tempImg.onload = function() {
+                            ctx.drawImage(tempImg, 0, 0, imgCanvas.width, imgCanvas.height);
+                            const imgData = imgCanvas.toDataURL('image/png');
+                            
+                            // Add image on the right side
+                            const imgSize = 60;
+                            pdf.addImage(imgData, 'PNG', pageWidth - margin - imgSize, yPos, imgSize, imgSize);
+                        };
+                        tempImg.src = characterImage.src;
+                    }
+                } catch (imgError) {
+                    console.log('Could not add character image to PDF:', imgError.message);
+                }
+            }
+            
+            // Basic Information Section
+            pdf.setFontSize(14);
+            pdf.setTextColor(0, 0, 0);
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Basic Information', margin, yPos);
+            yPos += 8;
+            
+            // Basic stats in two columns
+            pdf.setFontSize(11);
+            pdf.setFont(undefined, 'normal');
+            const col1X = margin;
+            const col2X = margin + (contentWidth / 2);
+            let statsY = yPos;
+            
+            // Column 1
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Gender:', col1X, statsY);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(this.currentCharacter.gender || 'Unknown', col1X + 20, statsY);
+            statsY += 7;
+            
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Race:', col1X, statsY);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(this.currentCharacter.race || 'Unknown', col1X + 20, statsY);
+            statsY += 7;
+            
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Class:', col1X, statsY);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(this.currentCharacter.class || 'Unknown', col1X + 20, statsY);
+            
+            // Column 2
+            statsY = yPos;
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Age:', col2X, statsY);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(this.currentCharacter.age || 'Unknown', col2X + 15, statsY);
+            statsY += 7;
+            
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Alignment:', col2X, statsY);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(this.currentCharacter.alignment || 'Unknown', col2X + 25, statsY);
+            
+            yPos = statsY + 15;
+            
+            // Add a stats box for RPG use
+            pdf.setDrawColor(200, 200, 200);
+            pdf.setLineWidth(0.5);
+            pdf.rect(margin, yPos, contentWidth, 30);
+            
             pdf.setFontSize(12);
-            pdf.setTextColor(150, 150, 150);
-            pdf.text('Generated with ElevenLabs SFX Character Voice', 105, 30, { align: 'center' });
-            
-            // Add the character card image
-            const imgData = canvas.toDataURL('image/png');
-            pdf.addImage(imgData, 'PNG', 10, 40, imgWidth, imgHeight);
-            
-            // Add generation date
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Character Stats (for RPG use)', margin + 5, yPos + 7);
             pdf.setFontSize(10);
-            pdf.text(`Generated on: ${new Date().toLocaleDateString('en-GB')}`, 105, 280, { align: 'center' });
+            pdf.setFont(undefined, 'normal');
+            pdf.text('STR: ___  DEX: ___  CON: ___  INT: ___  WIS: ___  CHA: ___', margin + 5, yPos + 15);
+            pdf.text('HP: ___/___  AC: ___  Initiative: ___  Speed: ___', margin + 5, yPos + 23);
+            yPos += 35;
+            
+            // Description Section
+            pdf.setFontSize(14);
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Physical Description', margin, yPos);
+            yPos += 8;
+            
+            pdf.setFontSize(11);
+            pdf.setFont(undefined, 'normal');
+            yPos = addWrappedText(
+                this.currentCharacter.description || 'No description available',
+                margin, yPos, contentWidth - 70 // Leave space for image if on right
+            );
+            yPos += 10;
+            
+            // Background Section
+            pdf.setFontSize(14);
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Background', margin, yPos);
+            yPos += 8;
+            
+            pdf.setFontSize(11);
+            pdf.setFont(undefined, 'normal');
+            yPos = addWrappedText(
+                this.currentCharacter.background || 'No background available',
+                margin, yPos, contentWidth
+            );
+            yPos += 10;
+            
+            // Personality Section
+            if (this.currentCharacter.personality) {
+                pdf.setFontSize(14);
+                pdf.setFont(undefined, 'bold');
+                pdf.text('Personality', margin, yPos);
+                yPos += 8;
+                
+                pdf.setFontSize(11);
+                pdf.setFont(undefined, 'normal');
+                yPos = addWrappedText(this.currentCharacter.personality, margin, yPos, contentWidth);
+                yPos += 10;
+            }
+            
+            // Character Quote
+            if (this.currentCharacter.quote) {
+                pdf.setFontSize(14);
+                pdf.setFont(undefined, 'bold');
+                pdf.text('Signature Quote', margin, yPos);
+                yPos += 8;
+                
+                pdf.setFontSize(12);
+                pdf.setFont(undefined, 'italic');
+                pdf.setTextColor(139, 69, 19);
+                pdf.text(`"${this.currentCharacter.quote}"`, pageWidth / 2, yPos, { align: 'center' });
+                pdf.setFont(undefined, 'normal');
+                pdf.setTextColor(0, 0, 0);
+                yPos += 15;
+            }
+            
+            // Abilities & Skills Section (empty for player use)
+            if (yPos < pageHeight - 100) {
+                pdf.setFontSize(14);
+                pdf.setFont(undefined, 'bold');
+                pdf.text('Abilities & Skills', margin, yPos);
+                yPos += 8;
+                
+                // Draw lines for abilities
+                pdf.setDrawColor(200, 200, 200);
+                pdf.setLineWidth(0.1);
+                const lineSpacing = 8;
+                const numAbilityLines = 5;
+                
+                for (let i = 0; i < numAbilityLines; i++) {
+                    pdf.line(margin, yPos + (i * lineSpacing), pageWidth - margin, yPos + (i * lineSpacing));
+                }
+                yPos += (numAbilityLines * lineSpacing) + 10;
+            }
+            
+            // Notes Section (empty for player use)
+            if (yPos < pageHeight - 60) {
+                pdf.setFontSize(14);
+                pdf.setFont(undefined, 'bold');
+                pdf.text('Additional Notes', margin, yPos);
+                yPos += 8;
+                
+                // Draw lines for notes
+                pdf.setDrawColor(200, 200, 200);
+                pdf.setLineWidth(0.1);
+                const lineSpacing = 8;
+                const numLines = Math.floor((pageHeight - yPos - 30) / lineSpacing);
+                
+                for (let i = 0; i < numLines; i++) {
+                    pdf.line(margin, yPos + (i * lineSpacing), pageWidth - margin, yPos + (i * lineSpacing));
+                }
+            }
+            
+            // Footer
+            pdf.setFontSize(9);
+            pdf.setTextColor(150, 150, 150);
+            pdf.text(
+                `Generated on ${new Date().toLocaleDateString('en-GB')} • Created with ElevenLabs SFX Character Voice Generator`,
+                pageWidth / 2,
+                pageHeight - 10,
+                { align: 'center' }
+            );
             
             // Save the PDF
             pdf.save(`${this.currentCharacter.name.replace(/[^a-z0-9]/gi, '_')}_character_sheet.pdf`);
