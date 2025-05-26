@@ -4,10 +4,13 @@ class CharacterGenerator {
         this.elevenLabsApiKey = localStorage.getItem('elevenLabsApiKey') || '';
         this.audioElement = document.getElementById('characterAudio');
         this.dmAudioElement = document.getElementById('dmNarrationAudio');
+        this.ambientAudioElement = document.getElementById('ambientAudio');
         this.currentCharacter = null;
         this.currentAudioBlob = null;
         this.isPlaying = false;
         this.isDMNarrating = false;
+        this.isPlayingAmbient = false;
+        this.currentAmbientBlob = null;
         
         // User preferences
         this.imageStyle = localStorage.getItem('imageStyle') || 'fantasy art';
@@ -100,7 +103,13 @@ class CharacterGenerator {
             imageStyleSelect: document.getElementById('imageStyle'),
             dmVoiceSelect: document.getElementById('dmVoice'),
             tabBtns: document.querySelectorAll('.tab-btn'),
-            tabContents: document.querySelectorAll('.tab-content')
+            tabContents: document.querySelectorAll('.tab-content'),
+            ambientSoundBtn: document.getElementById('ambientSoundBtn'),
+            editQuoteBtn: document.getElementById('editQuoteBtn'),
+            quoteEditContainer: document.getElementById('quoteEditContainer'),
+            customQuoteInput: document.getElementById('customQuoteInput'),
+            saveQuoteBtn: document.getElementById('saveQuoteBtn'),
+            cancelQuoteBtn: document.getElementById('cancelQuoteBtn')
         };
     }
 
@@ -123,6 +132,12 @@ class CharacterGenerator {
         this.elements.exportPdfBtn.addEventListener('click', () => this.exportToPDF());
         this.elements.dmNarrateBtn.addEventListener('click', () => this.generateDMNarration());
         this.elements.regenerateImageBtn.addEventListener('click', () => this.regenerateImage());
+        this.elements.ambientSoundBtn.addEventListener('click', () => this.toggleAmbientSound());
+        
+        // Custom quote editing
+        this.elements.editQuoteBtn.addEventListener('click', () => this.startEditingQuote());
+        this.elements.saveQuoteBtn.addEventListener('click', () => this.saveCustomQuote());
+        this.elements.cancelQuoteBtn.addEventListener('click', () => this.cancelEditingQuote());
         
         this.audioElement.addEventListener('ended', () => {
             this.isPlaying = false;
@@ -173,13 +188,29 @@ class CharacterGenerator {
     }
     
     switchTab(tabName) {
+        console.log('Switching to tab:', tabName);
+        
         // Remove active class from all tabs and contents
         this.elements.tabBtns.forEach(btn => btn.classList.remove('active'));
         this.elements.tabContents.forEach(content => content.classList.remove('active'));
         
         // Add active class to selected tab and content
-        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-        document.querySelector(`.${tabName}-tab`).classList.add('active');
+        const selectedTab = document.querySelector(`[data-tab="${tabName}"]`);
+        const selectedContent = document.querySelector(`.${tabName}-tab`);
+        
+        if (selectedTab) {
+            selectedTab.classList.add('active');
+            console.log('Activated tab button:', tabName);
+        } else {
+            console.error('Tab button not found:', tabName);
+        }
+        
+        if (selectedContent) {
+            selectedContent.classList.add('active');
+            console.log('Activated tab content:', tabName);
+        } else {
+            console.error('Tab content not found:', tabName);
+        }
     }
 
     showMessage(message, type = 'error') {
@@ -355,6 +386,15 @@ class CharacterGenerator {
         this.currentAudioBlob = null;
         this.currentCharacterIndex = -1;
         
+        // Stop and clear ambient audio
+        if (this.isPlayingAmbient) {
+            this.ambientAudioElement.pause();
+            this.isPlayingAmbient = false;
+            this.updateAmbientButton();
+        }
+        this.ambientAudioElement.src = '';
+        this.currentAmbientBlob = null;
+        
         // Clear the input
         this.elements.characterPrompt.value = '';
         
@@ -407,6 +447,15 @@ class CharacterGenerator {
         
         this.currentCharacterIndex = index;
         const character = this.characters[index];
+        
+        // Stop and clear ambient audio for previous character
+        if (this.isPlayingAmbient) {
+            this.ambientAudioElement.pause();
+            this.isPlayingAmbient = false;
+            this.updateAmbientButton();
+        }
+        this.ambientAudioElement.src = '';
+        this.currentAmbientBlob = null;
         
         // Restore the character data
         this.currentCharacter = character.data;
@@ -542,7 +591,8 @@ class CharacterGenerator {
             "background": "A brief background story (2-3 sentences)",
             "personality": "Key personality traits",
             "quote": "A characteristic quote they might say (max 10 words)",
-            "imagePrompt": "A detailed prompt for generating their portrait image, focusing on appearance, clothing, expression, and fantasy art style"
+            "imagePrompt": "A detailed prompt for generating their portrait image, focusing on appearance, clothing, expression, and fantasy art style",
+            "location": "Where they might be found (tavern, forest, castle, dungeon, etc)"
         }
         
         Make it creative and engaging. The quote should capture their essence.
@@ -619,7 +669,7 @@ class CharacterGenerator {
         }
         
         // Ensure all required fields exist (silently add defaults)
-        const requiredFields = ['name', 'gender', 'race', 'class', 'age', 'alignment', 'description', 'background', 'quote', 'imagePrompt'];
+        const requiredFields = ['name', 'gender', 'race', 'class', 'age', 'alignment', 'description', 'background', 'quote', 'imagePrompt', 'location'];
         for (const field of requiredFields) {
             if (!characterData[field]) {
                 if (field === 'name') {
@@ -627,6 +677,8 @@ class CharacterGenerator {
                 } else if (field === 'gender') {
                     // Try to detect gender from description or name if not provided
                     characterData[field] = this.detectGender(characterData);
+                } else if (field === 'location') {
+                    characterData[field] = 'tavern';
                 } else {
                     characterData[field] = 'Unknown';
                 }
@@ -1032,6 +1084,103 @@ class CharacterGenerator {
             this.elements.regenerateVoiceBtn.classList.remove('loading');
         }
     }
+    
+    async toggleAmbientSound() {
+        if (!this.currentCharacter) {
+            this.showMessage('No character to generate ambient sound for');
+            return;
+        }
+        
+        if (!this.elevenLabsApiKey) {
+            this.showMessage('ElevenLabs API key required for ambient sounds');
+            return;
+        }
+        
+        // If already playing, stop it
+        if (this.isPlayingAmbient) {
+            this.ambientAudioElement.pause();
+            this.isPlayingAmbient = false;
+            this.updateAmbientButton();
+            return;
+        }
+        
+        // If we already have ambient audio for this character, just play it
+        if (this.ambientAudioElement.src) {
+            this.ambientAudioElement.play();
+            this.isPlayingAmbient = true;
+            this.updateAmbientButton();
+            return;
+        }
+        
+        // Generate new ambient sound
+        this.elements.ambientSoundBtn.disabled = true;
+        this.elements.ambientSoundBtn.classList.add('loading');
+        
+        try {
+            const location = this.currentCharacter.location || 'tavern';
+            const ambientPrompt = `ambient sounds of a ${location}, background atmosphere, environmental sounds`;
+            
+            console.log('Generating ambient sound:', ambientPrompt);
+            
+            const response = await fetch('https://api.elevenlabs.io/v1/sound-generation', {
+                method: 'POST',
+                headers: {
+                    'xi-api-key': this.elevenLabsApiKey,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    text: ambientPrompt,
+                    duration_seconds: 10  // Longer duration for ambient
+                })
+            });
+            
+            if (!response.ok) {
+                const error = await response.text();
+                console.error('ElevenLabs SFX error:', error);
+                throw new Error('Failed to generate ambient sound');
+            }
+            
+            const audioBlob = await response.blob();
+            this.currentAmbientBlob = audioBlob;
+            const audioUrl = URL.createObjectURL(audioBlob);
+            
+            // Set up and play the ambient sound
+            this.ambientAudioElement.src = audioUrl;
+            this.ambientAudioElement.volume = 0.3; // Lower volume for background
+            this.ambientAudioElement.play();
+            this.isPlayingAmbient = true;
+            this.updateAmbientButton();
+            
+            this.showMessage(`Playing ${location} ambient sounds`, 'success');
+            
+        } catch (error) {
+            console.error('Failed to generate ambient sound:', error);
+            this.showMessage('Failed to generate ambient sound');
+        } finally {
+            this.elements.ambientSoundBtn.disabled = false;
+            this.elements.ambientSoundBtn.classList.remove('loading');
+        }
+    }
+    
+    updateAmbientButton() {
+        if (this.isPlayingAmbient) {
+            this.elements.ambientSoundBtn.classList.add('playing');
+            this.elements.ambientSoundBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                </svg>
+                <span>Stop Ambient</span>
+            `;
+        } else {
+            this.elements.ambientSoundBtn.classList.remove('playing');
+            this.elements.ambientSoundBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14,3.23V5.29C16.89,6.15 19,8.83 19,12C19,15.17 16.89,17.84 14,18.7V20.77C18,19.86 21,16.28 21,12C21,7.72 18,4.14 14,3.23M16.5,12C16.5,10.23 15.5,8.71 14,7.97V16C15.5,15.29 16.5,13.76 16.5,12M3,9V15H7L12,20V4L7,9H3Z"/>
+                </svg>
+                <span>Ambient Sound</span>
+            `;
+        }
+    }
 
     toggleVoice() {
         if (!this.audioElement || !this.audioElement.src) {
@@ -1062,6 +1211,57 @@ class CharacterGenerator {
             this.elements.playIcon.classList.remove('hidden');
             this.elements.pauseIcon.classList.add('hidden');
             this.elements.voiceText.textContent = 'Play Voice';
+        }
+    }
+    
+    startEditingQuote() {
+        const currentQuote = this.currentCharacter?.quote || '';
+        this.elements.customQuoteInput.value = currentQuote;
+        this.elements.quoteEditContainer.classList.remove('hidden');
+        this.elements.customQuoteInput.focus();
+    }
+    
+    cancelEditingQuote() {
+        this.elements.quoteEditContainer.classList.add('hidden');
+        this.elements.customQuoteInput.value = '';
+    }
+    
+    async saveCustomQuote() {
+        const newQuote = this.elements.customQuoteInput.value.trim();
+        
+        if (!newQuote) {
+            this.showMessage('Please enter a quote');
+            return;
+        }
+        
+        if (!this.currentCharacter) {
+            this.showMessage('No character loaded');
+            return;
+        }
+        
+        // Update the character's quote
+        this.currentCharacter.quote = newQuote;
+        
+        // Update the displayed quote
+        const quoteElement = document.getElementById('characterQuote');
+        if (quoteElement) {
+            quoteElement.textContent = `"${newQuote}"`;
+        }
+        
+        // Hide the edit container
+        this.elements.quoteEditContainer.classList.add('hidden');
+        
+        // Update saved character if applicable
+        if (this.currentCharacterIndex >= 0 && this.currentCharacterIndex < this.characters.length) {
+            this.characters[this.currentCharacterIndex].data.quote = newQuote;
+            this.saveCharacters();
+        }
+        
+        this.showMessage('Quote updated! You can now regenerate the voice with the new quote.', 'success');
+        
+        // Optionally auto-regenerate voice
+        if (confirm('Would you like to regenerate the voice with the new quote?')) {
+            await this.regenerateVoice();
         }
     }
 
@@ -1166,13 +1366,17 @@ class CharacterGenerator {
             
             // Character Image (if available)
             const characterImage = document.getElementById('characterImage');
+            let imageAdded = false;
+            const imgSize = 60;
+            const imageSpace = imgSize + 10; // Space reserved for image + padding
+            
             if (characterImage && characterImage.src) {
                 try {
                     // Check if it's a blob URL or base64 (these should work)
                     if (characterImage.src.startsWith('blob:') || characterImage.src.startsWith('data:')) {
                         // Add image on the right side
-                        const imgSize = 60;
                         pdf.addImage(characterImage.src, 'PNG', pageWidth - margin - imgSize, yPos, imgSize, imgSize);
+                        imageAdded = true;
                     } else if (!characterImage.src.includes('data:image/svg')) {
                         // For other URLs, try to convert to canvas (might fail due to CORS)
                         const imgCanvas = document.createElement('canvas');
@@ -1188,10 +1392,10 @@ class CharacterGenerator {
                             const imgData = imgCanvas.toDataURL('image/png');
                             
                             // Add image on the right side
-                            const imgSize = 60;
                             pdf.addImage(imgData, 'PNG', pageWidth - margin - imgSize, yPos, imgSize, imgSize);
                         };
                         tempImg.src = characterImage.src;
+                        imageAdded = true;
                     }
                 } catch (imgError) {
                     console.log('Could not add character image to PDF:', imgError.message);
@@ -1205,11 +1409,12 @@ class CharacterGenerator {
             pdf.text('Basic Information', margin, yPos);
             yPos += 8;
             
-            // Basic stats in two columns
+            // Basic stats in two columns (adjusted for image if present)
             pdf.setFontSize(11);
             pdf.setFont(undefined, 'normal');
+            const textWidth = imageAdded ? contentWidth - imageSpace : contentWidth;
             const col1X = margin;
-            const col2X = margin + (contentWidth / 2);
+            const col2X = margin + (textWidth / 2);
             let statsY = yPos;
             
             // Column 1
@@ -1245,6 +1450,11 @@ class CharacterGenerator {
             
             yPos = statsY + 15;
             
+            // Move yPos below image if image was added
+            if (imageAdded && yPos < (statsY - 15 + imgSize)) {
+                yPos = statsY - 15 + imgSize + 10;
+            }
+            
             // Add a stats box for RPG use
             pdf.setDrawColor(200, 200, 200);
             pdf.setLineWidth(0.5);
@@ -1269,7 +1479,7 @@ class CharacterGenerator {
             pdf.setFont(undefined, 'normal');
             yPos = addWrappedText(
                 this.currentCharacter.description || 'No description available',
-                margin, yPos, contentWidth - 70 // Leave space for image if on right
+                margin, yPos, contentWidth // Use full width since image should be above this section now
             );
             yPos += 10;
             

@@ -16,6 +16,11 @@ This web application showcases how the ElevenLabs SFX endpoint can be used beyon
 - **🎨 Portrait Generation**: Creates character portraits using Google's Imagen 3
 - **🎤 Creative Voice Synthesis**: **The key feature** - Uses ElevenLabs text-to-sound-effects API creatively to generate character voices
 - **🔄 Voice Regeneration**: Regenerate button allows creating new voice variations without regenerating the entire character
+- **✏️ Custom Quote Editing**: Edit character quotes and regenerate voices with your own text
+- **🎵 Ambient Soundscapes**: Generate location-based ambient sounds for immersive character environments
+- **📊 Character Collection**: Save and manage up to 10 characters
+- **🗣️ DM Narration**: Generate narrator voices for character introductions
+- **📄 PDF Export**: Create printable character sheets with improved layout
 - **🃏 Animated Character Cards**: Beautiful presentation with character stats, background, and playable voice clips
 
 ## 🚀 Quick Start
@@ -56,6 +61,13 @@ You'll need API keys from:
    - A unique portrait
    - A character voice speaking their signature quote
 4. Use the "Regenerate" button next to the play button to create new voice variations
+
+### New Features
+
+- **🎵 Ambient Sounds**: Click "Ambient Sound" to generate background atmosphere based on the character's location
+- **✏️ Edit Quotes**: Click the edit icon next to the quote to customize what your character says
+- **📊 Multiple Characters**: Save up to 10 characters and switch between them using tabs
+- **📄 Export to PDF**: Create a printable character sheet with all details and space for notes
 
 ### Example Prompts
 

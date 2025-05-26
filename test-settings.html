@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Settings Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #2a2a2a;
+            color: #f0f0f0;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+            background: #D4AF37;
+            border: none;
+            border-radius: 5px;
+            color: black;
+            font-weight: bold;
+        }
+        #output {
+            margin-top: 20px;
+            padding: 20px;
+            background: #1a1a1a;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Character Generator Settings Test</h1>
+    
+    <button onclick="testSettings()">Test Settings Modal</button>
+    <button onclick="checkElements()">Check All Elements</button>
+    <button onclick="showPreferences()">Force Show Preferences Tab</button>
+    
+    <div id="output"></div>
+    
+    <script>
+        function log(message) {
+            document.getElementById('output').innerHTML += message + '\n';
+        }
+        
+        function testSettings() {
+            log('Opening settings modal...');
+            
+            // Open the main app in a new window
+            const win = window.open('index.html', '_blank');
+            
+            setTimeout(() => {
+                log('Click the Settings button in the new window to test');
+            }, 1000);
+        }
+        
+        function checkElements() {
+            log('\n=== Checking Elements ===');
+            
+            // Check for tabs
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            log(`Tab buttons found: ${tabBtns.length}`);
+            
+            const tabContents = document.querySelectorAll('.tab-content');
+            log(`Tab contents found: ${tabContents.length}`);
+            
+            // Check for preference elements
+            const imageStyle = document.getElementById('imageStyle');
+            log(`Image style select: ${imageStyle ? 'Found' : 'Not found'}`);
+            
+            const dmVoice = document.getElementById('dmVoice');
+            log(`DM voice select: ${dmVoice ? 'Found' : 'Not found'}`);
+            
+            // Check local storage
+            log('\n=== Local Storage ===');
+            log(`Image Style: ${localStorage.getItem('imageStyle') || 'Not set'}`);
+            log(`DM Voice: ${localStorage.getItem('dmVoice') || 'Not set'}`);
+            log(`Gemini Key: ${localStorage.getItem('geminiApiKey') ? 'Set' : 'Not set'}`);
+            log(`ElevenLabs Key: ${localStorage.getItem('elevenLabsApiKey') ? 'Set' : 'Not set'}`);
+        }
+        
+        function showPreferences() {
+            log('\n=== Testing Tab Switching ===');
+            
+            // Try to find and click preferences tab
+            const prefsTab = document.querySelector('[data-tab="preferences"]');
+            if (prefsTab) {
+                prefsTab.click();
+                log('Clicked preferences tab');
+            } else {
+                log('Preferences tab not found - open the main app and settings modal first');
+            }
+        }
+        
+        // Initial check
+        window.onload = () => {
+            log('Test page loaded. Use the buttons above to test the settings.');
+            checkElements();
+        };
+    </script>
+</body>
+</html>

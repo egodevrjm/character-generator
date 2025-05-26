@@ -44,6 +44,7 @@
             <div class="modal-content">
                 <span class="close">&times;</span>
                 <h2>Settings & API Configuration</h2>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem; margin-bottom: 1rem;">Click the tabs below to switch between API Keys and Preferences</p>
                 
                 <div class="settings-tabs">
                     <button class="tab-btn active" data-tab="api">API Keys</button>
@@ -176,7 +177,21 @@
                                 <span>Download</span>
                             </button>
                         </div>
-                        <p id="characterQuote" class="character-quote"></p>
+                        <div class="character-quote-container">
+                            <p id="characterQuote" class="character-quote"></p>
+                            <button id="editQuoteBtn" class="edit-quote-btn" title="Edit quote">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div id="quoteEditContainer" class="quote-edit-container hidden">
+                            <input type="text" id="customQuoteInput" class="custom-quote-input" placeholder="Enter custom quote..." maxlength="50">
+                            <div class="quote-edit-buttons">
+                                <button id="saveQuoteBtn" class="save-quote-btn">Save</button>
+                                <button id="cancelQuoteBtn" class="cancel-quote-btn">Cancel</button>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="export-section">
@@ -192,6 +207,12 @@
                             </svg>
                             <span>DM Narration</span>
                         </button>
+                        <button id="ambientSoundBtn" class="ambient-sound-btn">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M14,3.23V5.29C16.89,6.15 19,8.83 19,12C19,15.17 16.89,17.84 14,18.7V20.77C18,19.86 21,16.28 21,12C21,7.72 18,4.14 14,3.23M16.5,12C16.5,10.23 15.5,8.71 14,7.97V16C15.5,15.29 16.5,13.76 16.5,12M3,9V15H7L12,20V4L7,9H3Z"/>
+                            </svg>
+                            <span>Ambient Sound</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -202,6 +223,7 @@
 
     <audio id="characterAudio" class="hidden"></audio>
     <audio id="dmNarrationAudio" class="hidden"></audio>
+    <audio id="ambientAudio" class="hidden" loop></audio>
     
     <!-- PDF Export Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>

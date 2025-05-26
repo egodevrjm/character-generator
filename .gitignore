@@ -41,6 +41,8 @@ apikeys.json
 *.temp
 *.swp
 *~
+.test-script.html
+IMPLEMENTATION_SUMMARY.md
 
 # Keep test files for GitHub (they're useful examples)
 # But never commit with actual API keys in them!
