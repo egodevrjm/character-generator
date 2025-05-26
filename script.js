@@ -1409,44 +1409,90 @@ class CharacterGenerator {
             pdf.text('Basic Information', margin, yPos);
             yPos += 8;
             
-            // Basic stats in two columns (adjusted for image if present)
+            // Basic stats - single column if image present, two columns otherwise
             pdf.setFontSize(11);
             pdf.setFont(undefined, 'normal');
-            const textWidth = imageAdded ? contentWidth - imageSpace : contentWidth;
-            const col1X = margin;
-            const col2X = margin + (textWidth / 2);
             let statsY = yPos;
             
-            // Column 1
-            pdf.setFont(undefined, 'bold');
-            pdf.text('Gender:', col1X, statsY);
-            pdf.setFont(undefined, 'normal');
-            pdf.text(this.currentCharacter.gender || 'Unknown', col1X + 20, statsY);
-            statsY += 7;
-            
-            pdf.setFont(undefined, 'bold');
-            pdf.text('Race:', col1X, statsY);
-            pdf.setFont(undefined, 'normal');
-            pdf.text(this.currentCharacter.race || 'Unknown', col1X + 20, statsY);
-            statsY += 7;
-            
-            pdf.setFont(undefined, 'bold');
-            pdf.text('Class:', col1X, statsY);
-            pdf.setFont(undefined, 'normal');
-            pdf.text(this.currentCharacter.class || 'Unknown', col1X + 20, statsY);
-            
-            // Column 2
-            statsY = yPos;
-            pdf.setFont(undefined, 'bold');
-            pdf.text('Age:', col2X, statsY);
-            pdf.setFont(undefined, 'normal');
-            pdf.text(this.currentCharacter.age || 'Unknown', col2X + 15, statsY);
-            statsY += 7;
-            
-            pdf.setFont(undefined, 'bold');
-            pdf.text('Alignment:', col2X, statsY);
-            pdf.setFont(undefined, 'normal');
-            pdf.text(this.currentCharacter.alignment || 'Unknown', col2X + 25, statsY);
+            if (imageAdded) {
+                // Single column layout when image is present
+                const maxTextWidth = contentWidth - imageSpace - 10;
+                
+                // Gender
+                pdf.setFont(undefined, 'bold');
+                pdf.text('Gender:', margin, statsY);
+                pdf.setFont(undefined, 'normal');
+                pdf.text(this.currentCharacter.gender || 'Unknown', margin + 20, statsY);
+                statsY += 7;
+                
+                // Race
+                pdf.setFont(undefined, 'bold');
+                pdf.text('Race:', margin, statsY);
+                pdf.setFont(undefined, 'normal');
+                pdf.text(this.currentCharacter.race || 'Unknown', margin + 20, statsY);
+                statsY += 7;
+                
+                // Class
+                pdf.setFont(undefined, 'bold');
+                pdf.text('Class:', margin, statsY);
+                pdf.setFont(undefined, 'normal');
+                pdf.text(this.currentCharacter.class || 'Unknown', margin + 20, statsY);
+                statsY += 7;
+                
+                // Age
+                pdf.setFont(undefined, 'bold');
+                pdf.text('Age:', margin, statsY);
+                pdf.setFont(undefined, 'normal');
+                const ageText = this.currentCharacter.age || 'Unknown';
+                const ageLines = pdf.splitTextToSize(ageText, maxTextWidth - 20);
+                pdf.text(ageLines[0], margin + 15, statsY);
+                if (ageLines.length > 1) {
+                    statsY += 5;
+                    pdf.text(ageLines[1], margin + 15, statsY);
+                }
+                statsY += 7;
+                
+                // Alignment
+                pdf.setFont(undefined, 'bold');
+                pdf.text('Alignment:', margin, statsY);
+                pdf.setFont(undefined, 'normal');
+                pdf.text(this.currentCharacter.alignment || 'Unknown', margin + 30, statsY);
+            } else {
+                // Two column layout when no image
+                const col1X = margin;
+                const col2X = margin + (contentWidth / 2);
+                
+                // Column 1
+                pdf.setFont(undefined, 'bold');
+                pdf.text('Gender:', col1X, statsY);
+                pdf.setFont(undefined, 'normal');
+                pdf.text(this.currentCharacter.gender || 'Unknown', col1X + 20, statsY);
+                statsY += 7;
+                
+                pdf.setFont(undefined, 'bold');
+                pdf.text('Race:', col1X, statsY);
+                pdf.setFont(undefined, 'normal');
+                pdf.text(this.currentCharacter.race || 'Unknown', col1X + 20, statsY);
+                statsY += 7;
+                
+                pdf.setFont(undefined, 'bold');
+                pdf.text('Class:', col1X, statsY);
+                pdf.setFont(undefined, 'normal');
+                pdf.text(this.currentCharacter.class || 'Unknown', col1X + 20, statsY);
+                
+                // Column 2
+                statsY = yPos;
+                pdf.setFont(undefined, 'bold');
+                pdf.text('Age:', col2X, statsY);
+                pdf.setFont(undefined, 'normal');
+                pdf.text(this.currentCharacter.age || 'Unknown', col2X + 15, statsY);
+                statsY += 7;
+                
+                pdf.setFont(undefined, 'bold');
+                pdf.text('Alignment:', col2X, statsY);
+                pdf.setFont(undefined, 'normal');
+                pdf.text(this.currentCharacter.alignment || 'Unknown', col2X + 25, statsY);
+            }
             
             yPos = statsY + 15;
             
